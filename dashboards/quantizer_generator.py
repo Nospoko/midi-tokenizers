@@ -25,12 +25,12 @@ class QuantizerFactory:
 
 class AbsoluteTimeQuantizerFactory(QuantizerFactory):
     quantizer_desc = """
-    - `pitch`: uses all 88 pitch values\n
-    - `velocity`: quantization using bins from artifacts/bin_edges.yaml\n
-    - timing: \n
-        - `start`: quantizes start into `n_start_bins` bins, evenly distributed across `sequence_duration`.\n
+    - `pitch`: uses all 88 pitch values
+    - `velocity`: quantization using bins from artifacts/bin_edges.yaml
+    - timing:
+        - `start`: quantizes start into `n_start_bins` bins, evenly distributed across `sequence_duration`.
         If the piece is longer that `sequence_duration`, all late notes will land in the last bin.
-        - `duration`: quantization using bins from artifacts/bin_edges.yaml\n
+        - `duration`: quantization using bins from artifacts/bin_edges.yaml
     """
 
     @staticmethod
@@ -57,9 +57,9 @@ class AbsoluteTimeQuantizerFactory(QuantizerFactory):
 
 class RelativeTimeQuantizerFactory(QuantizerFactory):
     quantizer_desc = """
-    - `pitch`: uses all 88 pitch values\n
-    - `velocity`: quantization using bins from artifacts/bin_edges.yaml\n
-    - timing: \n
+    - `pitch`: uses all 88 pitch values
+    - `velocity`: quantization using bins from artifacts/bin_edges.yaml
+    - timing: 
         - `dstart`: Calculates time between consecutive notes played.
         Quantizes this time into bins specified in artifacts/bin_edges.yaml
         - `duration`: quantization using bins from artifacts/bin_edges.yaml
