@@ -11,6 +11,7 @@ class RelativeTimeQuantizer(MidiQuantizer):
         n_duration_bins: int = 3,
         n_velocity_bins: int = 3,
     ):
+        self.keys = ["pitch", "dstart_bin", "duration_bin", "velocity_bin"]
         self.n_dstart_bins = n_dstart_bins
         self.n_duration_bins = n_duration_bins
         self.n_velocity_bins = n_velocity_bins
