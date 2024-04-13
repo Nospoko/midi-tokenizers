@@ -70,10 +70,10 @@ def main():
     review_columns = st.columns(2)
     with review_columns[0]:
         st.write("Original piece")
-        streamlit_pianoroll.from_fortepyan(piece=piece, key="original_0")
+        streamlit_pianoroll.from_fortepyan(piece=piece)
     with review_columns[1]:
         st.write("Quantized piece")
-        streamlit_pianoroll.from_fortepyan(piece=quantized_piece, key="quantized_0")
+        streamlit_pianoroll.from_fortepyan(piece=quantized_piece)
 
 
 if __name__ == "__main__":
