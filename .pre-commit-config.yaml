@@ -1,0 +1,30 @@
+default_language_version:
+  python: python3.10
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.4.0
+    hooks:
+      - id: check-merge-conflict
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+      - id: debug-statements
+      - id: check-yaml
+      - id: check-docstring-first
+      - id: requirements-txt-fixer
+  - repo: https://github.com/pycqa/flake8
+    rev: 6.0.0
+    hooks:
+    - id: flake8
+      args: ["--max-line-length=120","--extend-ignore=E203","--per-file-ignores=.github/scripts/bump_version.py:E402"]
+  - repo: https://github.com/ambv/black
+    rev: 23.7.0
+    hooks:
+    - id: black
+      args: [--line-length=130]
+      additional_dependencies: ['click==8.0.4']
+  - repo: https://github.com/pycqa/isort
+    rev: 5.12.0
+    hooks:
+    - id: isort
+      name: isort
+      args: [--line-length=130]
