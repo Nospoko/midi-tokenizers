@@ -1,2 +1,4 @@
 fortepyan>=0.2.8
 streamlit-pianoroll>=0.7.0
+numpy~=1.26.3
+pandas~=2.1.4
