@@ -1,10 +1,9 @@
 from abc import abstractmethod
 
 import streamlit as st
-
-from quantizer import MidiQuantizer
-from absolute_time_quantizer import AbsoluteTimeQuantizer
-from relative_time_quantizer import RelativeTimeQuantizer
+from quantizers.quantizer import MidiQuantizer
+from quantizers.absolute_time_quantizer import AbsoluteTimeQuantizer
+from quantizers.relative_time_quantizer import RelativeTimeQuantizer
 
 
 class QuantizerFactory:
@@ -59,7 +58,7 @@ class RelativeTimeQuantizerFactory(QuantizerFactory):
     quantizer_desc = """
     - `pitch`: uses all 88 pitch values
     - `velocity`: quantization using bins from artifacts/bin_edges.yaml
-    - timing: 
+    - timing:
         - `dstart`: Calculates time between consecutive notes played.
         Quantizes this time into bins specified in artifacts/bin_edges.yaml
         - `duration`: quantization using bins from artifacts/bin_edges.yaml
