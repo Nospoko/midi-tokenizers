@@ -22,20 +22,29 @@ class NoLossTokenizer(MidiTokenizer):
     def _build_vocab(self):
         self.vocab = list(self.specials)
 
+        # Add MIDI note and velocity tokens to the vocabulary
         for pitch in range(21, 109):
             self.vocab.append(f"NOTE_ON_{pitch}")
             self.vocab.append(f"NOTE_OFF_{pitch}")
+
         for vel in range(128):
             self.vocab.append(f"VELOCITY_{vel}")
+
         token = self.eps
+
+        # Generate time tokens with exponential distribution
         while token < 1:
             self.vocab.append(f"{token}s")
             token *= 2
-        self.max_time_token = token
+
+        self.max_time_token = token  # Maximum time token
         return self.vocab
 
     @staticmethod
     def _notes_to_event_df(notes: pd.DataFrame):
+        """
+        Convert MIDI note dataframe into a dataframe with on/off events.
+        """
         note_on_events: pd.DataFrame = notes.loc[:, ["start", "pitch", "velocity"]]
         note_off_events: pd.DataFrame = notes.loc[:, ["end", "pitch"]]
 
@@ -51,27 +60,35 @@ class NoLossTokenizer(MidiTokenizer):
 
     def tokenize(self, notes: pd.DataFrame) -> list[str]:
         tokens = []
+        # Time difference between current and previous events
         previous_time = 0
-        current_step = self.max_time_token
-
         note_events = self._notes_to_event_df(notes=notes)
 
         for _, current_event in note_events.iterrows():
+            # Check timing beginning with the largest step
             current_step = self.max_time_token
+            # Calculate the time difference between current and previous event
             dt = current_event["time"] - previous_time
-            filling_dt = 0
+            filling_dt = 0  # filled time difference
+            # Fill the time gap
             while True:
                 if filling_dt + current_step > dt:
+                    # Select time step that will fit into the gap
                     current_step /= 2
                 else:
+                    # Fill the gap with current time token
                     tokens.append(f"{current_step}s")
                     filling_dt += current_step
 
                 if dt - filling_dt < self.eps:
+                    # Exit the loop when the gap is filled
                     break
+
+            # Append note event tokens
             if current_event["event"] == "NOTE_ON":
                 tokens.append(f"VELOCITY_{current_event['velocity']}")
             tokens.append(f"{current_event['event']}_{current_event['pitch']}")
+
             previous_time = current_event["time"]
 
         return tokens
