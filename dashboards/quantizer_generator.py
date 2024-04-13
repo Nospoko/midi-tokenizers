@@ -25,8 +25,8 @@ class QuantizerFactory:
 
 class AbsoluteTimeQuantizerFactory(QuantizerFactory):
     quantizer_desc = """
-    `- pitch`: uses all 88 pitch values\n
-    `- velocity`: quantization using bins from artifacts/bin_edges.yaml\n
+    - `pitch`: uses all 88 pitch values\n
+    - `velocity`: quantization using bins from artifacts/bin_edges.yaml\n
     - timing: \n
         - `start`: quantizes start into `n_start_bins` bins, evenly distributed across `sequence_duration`.\n
         If the piece is longer that `sequence_duration`, all late notes will land in the last bin.
