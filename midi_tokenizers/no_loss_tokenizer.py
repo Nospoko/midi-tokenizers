@@ -1,21 +1,24 @@
-from midi_tokenizers.midi_tokenizer import MidiTokenizer
 import pandas as pd
-from tqdm import tqdm
+
+from midi_tokenizers.midi_tokenizer import MidiTokenizer
 
 
 class NoLossTokenizer(MidiTokenizer):
-    def __init__(self, eps: float = 0.001, ):
+    def __init__(
+        self,
+        eps: float = 0.001,
+    ):
         super().__init__()
         self.eps = eps
         self.specials = ["<CLS>"]
         self.vocab = self._build_vocab()
         self.token_to_id = {token: it for it, token in enumerate(self.vocab)}
-        
+
     def __rich_repr__(self):
         yield "NoLossTokenizer"
         yield "eps", self.eps
         yield "vocab_size", self.vocab_size
-    
+
     def _build_vocab(self):
         self.vocab = list(self.specials)
 
@@ -40,20 +43,19 @@ class NoLossTokenizer(MidiTokenizer):
         note_off_events["event"] = "NOTE_OFF"
         note_on_events["time"] = note_on_events["start"]
         note_on_events["event"] = "NOTE_ON"
-        
+
         note_events: pd.DataFrame = pd.concat([note_on_events, note_off_events], axis=0)
         note_events = note_events.sort_values(by="time")
-        
+
         return note_events
-    
+
     def tokenize(self, notes: pd.DataFrame) -> list[str]:
         tokens = []
         previous_time = 0
         current_step = self.max_time_token
-        
+
         note_events = self._notes_to_event_df(notes=notes)
 
-        
         for _, current_event in note_events.iterrows():
             current_step = self.max_time_token
             dt = current_event["time"] - previous_time
@@ -64,7 +66,7 @@ class NoLossTokenizer(MidiTokenizer):
                 else:
                     tokens.append(f"{current_step}s")
                     filling_dt += current_step
-                
+
                 if dt - filling_dt < self.eps:
                     break
             if current_event["event"] == "NOTE_ON":
@@ -77,7 +79,7 @@ class NoLossTokenizer(MidiTokenizer):
     def untokenize(self, tokens: list[str]) -> pd.DataFrame:
         note_on_events = []
         note_off_events = []
-        
+
         current_time = 0
         current_velocity = 0
         for token in tokens:
@@ -104,20 +106,16 @@ class NoLossTokenizer(MidiTokenizer):
         # Both should be sorted by time right now
         note_on_events = pd.DataFrame(note_on_events)
         note_off_events = pd.DataFrame(note_off_events)
-        
-        # So if we sort them by pitch ...
-        note_on_events = note_on_events.sort_values(by="pitch")
-        note_off_events = note_off_events.sort_values(by="pitch")
 
-        note_off_events = note_off_events.reset_index(drop=True)
-        note_on_events =  note_on_events.reset_index(drop=True)
-        
+        # So if we sort them by pitch ...
+        note_on_events = note_on_events.sort_values(by="pitch", kind="stable").reset_index(drop=True)
+        note_off_events = note_off_events.sort_values(by="pitch", kind="stable").reset_index(drop=True)
+
         # we get pairs of note on and note off events for each key-press
         notes = note_on_events
         notes["end"] = note_off_events["end"]
-        
+
         notes = notes.sort_values(by="start")
         notes = notes.reset_index(drop=True)
 
         return notes
-        

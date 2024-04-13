@@ -4,8 +4,8 @@ import streamlit as st
 
 from quantizer_generator import QuantizerGenerator
 from midi_tokenizers.midi_tokenizer import MidiTokenizer
-from midi_tokenizers.quantized_midi_tokenizer import QuantizedMidiTokenizer
 from midi_tokenizers.no_loss_tokenizer import NoLossTokenizer
+from midi_tokenizers.quantized_midi_tokenizer import QuantizedMidiTokenizer
 
 
 class TokenizerFactory:
@@ -55,11 +55,11 @@ class NoLossTokenizerFactory(TokenizerFactory):
     def select_parameters() -> dict:
         eps = st.number_input(label="eps - minimal time shift value", value=0.01, format="%0.3f")
         return {"eps": eps}
-    
+
     @staticmethod
     def create_tokenizer(parameters: dict) -> NoLossTokenizer:
         return NoLossTokenizer(**parameters)
-    
+
 
 class TokenizerGenerator:
     # append new factories to this dict when new Tokenizers are defined.
