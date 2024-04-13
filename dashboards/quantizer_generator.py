@@ -12,6 +12,8 @@ class QuantizerFactory:
     Base class for Quantizer objects factory. Makes adding new Quantizers to the dashboard easier.
     """
 
+    quantizer_desc = ""
+
     @abstractmethod
     def select_parameters() -> dict:
         pass
@@ -22,6 +24,15 @@ class QuantizerFactory:
 
 
 class AbsoluteTimeQuantizerFactory(QuantizerFactory):
+    quantizer_desc = """
+    `- pitch`: uses all 88 pitch values\n
+    `- velocity`: quantization using bins from artifacts/bin_edges.yaml\n
+    - timing: \n
+        - `start`: quantizes start into `n_start_bins` bins, evenly distributed across `sequence_duration`.\n
+        If the piece is longer that `sequence_duration`, all late notes will land in the last bin.
+        - `duration`: quantization using bins from artifacts/bin_edges.yaml\n
+    """
+
     @staticmethod
     def select_parameters():
         n_velocity_bins = st.number_input(label="n_velocity_bins", value=3)
@@ -45,6 +56,15 @@ class AbsoluteTimeQuantizerFactory(QuantizerFactory):
 
 
 class RelativeTimeQuantizerFactory(QuantizerFactory):
+    quantizer_desc = """
+    - `pitch`: uses all 88 pitch values\n
+    - `velocity`: quantization using bins from artifacts/bin_edges.yaml\n
+    - timing: \n
+        - `dstart`: Calculates time between consecutive notes played.
+        Quantizes this time into bins specified in artifacts/bin_edges.yaml
+        - `duration`: quantization using bins from artifacts/bin_edges.yaml
+    """
+
     @staticmethod
     def select_parameters() -> dict:
         n_velocity_bins = st.number_input(label="n_velocity_bins", value=3)
@@ -69,6 +89,9 @@ class QuantizerGenerator:
         "AbsoluteTimeQuantizer": AbsoluteTimeQuantizerFactory(),
         "RelativeTimeQuantizer": RelativeTimeQuantizerFactory(),
     }
+
+    def quantization_info(self, name: str):
+        return self.name_to_factory_map[name].quantizer_desc
 
     def generate_quantizer_with_streamlit(self, name: str) -> MidiQuantizer:
         factory = self.name_to_factory_map[name]

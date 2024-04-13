@@ -7,11 +7,16 @@ from datasets import Dataset, load_dataset
 from dashboards.quantizer_generator import QuantizerGenerator
 
 
+@st.cache_data
+def load_hf_dataset(dataset_name: str, split: str):
+    return load_dataset(dataset_name, split=split)
+
+
 def select_dataset():
     dataset_names = ["roszcz/maestro-sustain-v2"]
     dataset_name = st.selectbox(label="dataset", options=dataset_names)
 
-    dataset = load_dataset(dataset_name, split="test")
+    dataset = load_hf_dataset(dataset_name=dataset_name, split="test")
     return dataset
 
 
@@ -49,6 +54,8 @@ def main():
 
     quantizer_names = quantizer_generator.name_to_factory_map.keys()
     quantizer_name = st.selectbox(label="quantizer", options=quantizer_names)
+
+    st.write(quantizer_generator.quantization_info(name=quantizer_name))
     with st.form("quantizer generation"):
         quantizer = quantizer_generator.generate_quantizer_with_streamlit(quantizer_name)
         st.form_submit_button("Run")
