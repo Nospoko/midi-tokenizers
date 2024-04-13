@@ -1,7 +1,8 @@
 import yaml
 import numpy as np
 import pandas as pd
-from quantizer import MidiQuantizer
+
+from quantizers.quantizer import MidiQuantizer
 
 
 class RelativeTimeQuantizer(MidiQuantizer):

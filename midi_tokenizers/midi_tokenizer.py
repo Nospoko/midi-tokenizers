@@ -21,7 +21,7 @@ class MidiTokenizer:
 
         return df
 
-    def encode(self, record: dict) -> list[int]:
-        tokens = self.tokenize(record)
+    def encode(self, notes: pd.DataFrame) -> list[int]:
+        tokens = self.tokenize(notes)
         token_ids = [self.token_to_id[token] for token in tokens]
         return token_ids

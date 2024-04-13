@@ -15,6 +15,7 @@ class QuantizedMidiTokenizer(MidiTokenizer):
             quantizer_name,
             quantization_cfg=quantization_cfg,
         )
+
         self.quantization_cfg = quantization_cfg
         self.keys = self.quantizer.keys
         self.specials = ["<CLS>"]
@@ -34,13 +35,10 @@ class QuantizedMidiTokenizer(MidiTokenizer):
         return len(self.vocab)
 
     def _build_vocab(self):
-        src_iterators_product = itertools.product(
-            # Always include 88 pitches
-            range(21, 109),
-            range(self.quantization_cfg["dstart"]),
-            range(self.quantization_cfg["duration"]),
-            range(self.quantization_cfg["velocity"]),
-        )
+        # get product of all possible bin numbers - always use 88 pitch values
+        iterables = [range(self.quantization_cfg[f"n_{key}s"]) for key in self.keys if key != "pitch"]
+        iterables = [range(21, 109)] + iterables
+        src_iterators_product = itertools.product(*iterables)
 
         for pitch, dstart, duration, velocity in src_iterators_product:
             key = f"{pitch}-{dstart}-{duration}-{velocity}"
@@ -48,6 +46,7 @@ class QuantizedMidiTokenizer(MidiTokenizer):
 
     def tokenize(self, notes: pd.DataFrame) -> list[str]:
         tokens = []
+        notes = self.quantizer.quantize_frame(df=notes)
         n_samples = len(notes[self.keys[0]])
         for idx in range(n_samples):
             token = "-".join([f"{notes[key][idx]:0.0f}" for key in self.keys])
