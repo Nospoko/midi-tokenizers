@@ -39,9 +39,9 @@ class RelativeTimeQuantizer(MidiQuantizer):
         self.velocity_bin_edges = bin_edges["velocity"][self.n_velocity_bins]
 
     def quantize_frame(self, df: pd.DataFrame) -> pd.DataFrame:
-        df["next_start"] = df.start.shift(-1)
-        df["dstart"] = df.next_start - df.start
-        df["dstart_bin"] = np.digitize(df.dstart.fillna(0), self.dstart_bin_edges) - 1
+        next_start = df.start.shift(-1)
+        dstart = next_start - df.start
+        df["dstart_bin"] = np.digitize(dstart.fillna(0), self.dstart_bin_edges) - 1
         df["duration_bin"] = np.digitize(df.duration, self.duration_bin_edges) - 1
         df["velocity_bin"] = np.digitize(df.velocity, self.velocity_bin_edges) - 1
 
@@ -53,11 +53,11 @@ class RelativeTimeQuantizer(MidiQuantizer):
         return quantized_velocity
 
     def apply_quantization(self, df: pd.DataFrame) -> pd.DataFrame:
-        df["quant_dstart"] = df.dstart_bin.map(lambda it: self.bin_to_dstart[it])
-        df["quant_duration"] = df.duration_bin.map(lambda it: self.bin_to_duration[it])
-        df["start"] = df.quant_dstart.cumsum().shift(1).fillna(0)
-        df["end"] = df.start + df.quant_duration
-        df["duration"] = df.quant_duration
+        quant_dstart = df.dstart_bin.map(lambda it: self.bin_to_dstart[it])
+        quant_duration = df.duration_bin.map(lambda it: self.bin_to_duration[it])
+        df["start"] = quant_dstart.cumsum().shift(1).fillna(0)
+        df["end"] = df.start + quant_duration
+        df["duration"] = quant_duration
         df["velocity"] = df.velocity_bin.map(lambda it: self.bin_to_velocity[it])
         return df
 

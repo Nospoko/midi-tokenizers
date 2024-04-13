@@ -48,7 +48,7 @@ class AbsoluteTimeQuantizer(MidiQuantizer):
             start = (self.start_bin_edges[it - 1] + self.start_bin_edges[it]) / 2
             self.bin_to_start.append(start)
 
-        last_start = 2 * self.start_bin_edges[-1]
+        last_start = self.start_bin_edges[-1] + self.sequence_duration / self.n_start_bins
         self.bin_to_start.append(last_start)
 
     def _build_duration_decoder(self):
