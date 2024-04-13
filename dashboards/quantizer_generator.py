@@ -1,6 +1,7 @@
 from abc import abstractmethod
 
 import streamlit as st
+
 from quantizers.quantizer import MidiQuantizer
 from quantizers.absolute_time_quantizer import AbsoluteTimeQuantizer
 from quantizers.relative_time_quantizer import RelativeTimeQuantizer
@@ -24,6 +25,9 @@ class QuantizerFactory:
 
 class AbsoluteTimeQuantizerFactory(QuantizerFactory):
     quantizer_desc = """
+    artifacts/bin_edges.yaml stores bin edges calculated using quantiles -
+    notes in maestro dataset are evenly distributed into each bin.
+
     - `pitch`: uses all 88 pitch values
     - `velocity`: quantization using bins from artifacts/bin_edges.yaml
     - timing:
@@ -56,6 +60,9 @@ class AbsoluteTimeQuantizerFactory(QuantizerFactory):
 
 class RelativeTimeQuantizerFactory(QuantizerFactory):
     quantizer_desc = """
+    artifacts/bin_edges.yaml stores bin edges calculated using quantiles -
+    notes in maestro dataset are evenly distributed into each bin.
+
     - `pitch`: uses all 88 pitch values
     - `velocity`: quantization using bins from artifacts/bin_edges.yaml
     - timing:
