@@ -11,7 +11,7 @@ def select_dataset():
     dataset_names = ["roszcz/maestro-sustain-v2"]
     dataset_name = st.selectbox(label="dataset", options=dataset_names)
 
-    dataset = load_dataset(dataset_name, split="train")
+    dataset = load_dataset(dataset_name, split="test")
     return dataset
 
 
@@ -55,9 +55,7 @@ def main():
 
     midi_dataset = select_dataset()
 
-    with st.form("data selection"):
-        record = select_record(midi_dataset=midi_dataset)
-        st.form_submit_button("Run")
+    record = select_record(midi_dataset=midi_dataset)
 
     piece = MidiPiece.from_huggingface(record=record)
     end = piece.df.start.max()
