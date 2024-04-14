@@ -62,18 +62,20 @@ class NoLossTokenizer(MidiTokenizer):
         """
         Convert MIDI note dataframe into a dict with on/off events.
         """
-        note_on_events: pd.DataFrame = notes.loc[:, ["start", "pitch", "velocity_bin"]]
-        note_off_events: pd.DataFrame = notes.loc[:, ["end", "pitch"]]
+        note_on_df: pd.DataFrame = notes.loc[:, ["start", "pitch", "velocity_bin"]]
+        note_off_df: pd.DataFrame = notes.loc[:, ["end", "pitch"]]
+        
+        note_off_df["time"] = note_off_df["end"]
+        note_off_df["event"] = "NOTE_OFF"
+        note_on_df["time"] = note_on_df["start"]
+        note_on_df["event"] = "NOTE_ON"
+        
+        note_on_events = note_on_df.to_dict(orient="records")
+        note_off_events = note_off_df.to_dict(orient="records")
+        note_events = note_on_events + note_off_events
 
-        note_off_events["time"] = note_off_events["end"]
-        note_off_events["event"] = "NOTE_OFF"
-        note_on_events["time"] = note_on_events["start"]
-        note_on_events["event"] = "NOTE_ON"
-
-        note_events: pd.DataFrame = pd.concat([note_on_events, note_off_events], axis=0)
-        note_events = note_events.sort_values(by="time")
-
-        return note_events.to_dict(orient="records")
+        note_events = sorted(note_events, key=lambda event: event["time"])
+        return note_events
 
     def tokenize(self, notes: pd.DataFrame) -> list[str]:
         notes = self.quantize_frame(notes)
