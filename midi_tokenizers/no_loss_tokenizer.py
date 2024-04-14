@@ -19,11 +19,17 @@ class NoLossTokenizer(MidiTokenizer):
 
         self.velocity_bin_edges = np.linspace(0, 127, num=n_velocity_bins, endpoint=True).astype(int)
         self.bin_to_velocity = self._build_velocity_decoder()
+        self.token_to_id = {token: it for it, token in enumerate(self.vocab)}
+        self.name = "NoLossTokenizer"
 
     def __rich_repr__(self):
         yield "NoLossTokenizer"
         yield "eps", self.eps
         yield "vocab_size", self.vocab_size
+
+    @property
+    def parameters(self):
+        return {"eps": self.eps, "n_velocity_bins": self.n_velocity_bins}
 
     @property
     def vocab_size(self) -> int:

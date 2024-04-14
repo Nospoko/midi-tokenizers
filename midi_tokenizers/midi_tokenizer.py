@@ -7,6 +7,7 @@ class MidiTokenizer:
     def __init__(self):
         self.token_to_id = None
         self.vocab = []
+        self.name = "MidiTokenizer"
 
     @abstractmethod
     def tokenize(self, record: dict) -> list[str]:
@@ -15,6 +16,10 @@ class MidiTokenizer:
     @abstractmethod
     def untokenize(self, tokens: list[str]) -> pd.DataFrame:
         raise NotImplementedError("Your encoder needs *untokenize* implementation")
+
+    @property
+    def parameters(self):
+        return {}
 
     @property
     def vocab_size(self) -> int:

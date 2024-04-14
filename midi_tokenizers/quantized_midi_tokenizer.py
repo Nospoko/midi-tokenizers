@@ -10,6 +10,7 @@ class QuantizedMidiTokenizer(MidiTokenizer):
     def __init__(self, quantization_cfg: dict, quantizer_name: str):
         super().__init__()
         quantizer_generator = QuantizerGenerator()
+        self.quantizer_name = quantizer_name
 
         self.quantizer = quantizer_generator.generate_quantizer(
             quantizer_name,
@@ -25,6 +26,7 @@ class QuantizedMidiTokenizer(MidiTokenizer):
         # add midi tokens to vocab
         self._build_vocab()
         self.token_to_id = {token: it for it, token in enumerate(self.vocab)}
+        self.name = "QuantizedMidiTokenizer"
 
     def __rich_repr__(self):
         yield "QuantizedMidiTokenizer"
@@ -33,6 +35,10 @@ class QuantizedMidiTokenizer(MidiTokenizer):
     @property
     def vocab_size(self) -> int:
         return len(self.vocab)
+
+    @property
+    def parameters(self):
+        return {"quantization_cfg": self.quantization_cfg, "quantizer_name": self.quantizer_name}
 
     def _build_vocab(self):
         # get product of all possible bin numbers - always use 88 pitch values

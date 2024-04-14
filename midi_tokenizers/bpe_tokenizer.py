@@ -1,31 +1,27 @@
+import json
 import tempfile
 from concurrent.futures import ThreadPoolExecutor
 
 import tokenizers
 import pandas as pd
-from datasets import Dataset, load_dataset
+from datasets import Dataset
 from tokenizers import Regex, Tokenizer, models, trainers, pre_tokenizers
 
 from midi_tokenizers.midi_tokenizer import MidiTokenizer
+from base_tokenizer_generator import BaseTokenizerGenerator
 
 
 class BpeTokenizer(MidiTokenizer):
-    def __init__(self, base_tokenizer: MidiTokenizer, path: str = None):
+    def __init__(self, base_tokenizer: MidiTokenizer, bpe_tokenizer: Tokenizer = None):
         super().__init__()
         self.base_tokenizer = base_tokenizer
-        if path is not None:
-            self.tokenizer: Tokenizer = Tokenizer.from_file(path=path)
-        else:
-            # Initialize tokenizer
+        self.tokenizer = bpe_tokenizer
+
+        if self.tokenizer is None:
+            # Initialize empty tokenizer
             self.tokenizer = Tokenizer(model=models.BPE())
             self.tokenizer.pre_tokenizer = self.prepare_text_pre_tokenizer()
             self.tokenizer.model = models.BPE()
-
-            # Train it on maestro
-            train_dataset = load_dataset("roszcz/maestro-sustain-v2", split="train")
-            self.train(train_dataset=train_dataset)
-
-        self.vocab = self.tokenizer.get_vocab()
 
     def prepare_data_for_training(self, file_name: str, train_dataset: Dataset):
         def process_record(record):
@@ -82,5 +78,27 @@ class BpeTokenizer(MidiTokenizer):
         new_tokens = concatenated_tokens.split(" ")
         return self.base_tokenizer.untokenize(tokens=new_tokens)
 
-    def save_bpe_tokenizer(self, path: str):
-        self.tokenizer.save(path=path)
+    def save_tokenizer(self, path: str):
+        tokenizer_desc = {
+            "base_tokenizer": self.base_tokenizer.name,
+            "base_tokenizer_parameters": self.base_tokenizer.parameters,
+            "bpe_tokenizer": self.tokenizer.to_str(),
+        }
+        with open(path, "w+") as f:
+            json.dump(tokenizer_desc, f)
+
+    @staticmethod
+    def from_file(path: str) -> "BpeTokenizer":
+        with open(path, "r") as f:
+            tokenizer_desc = json.load(f)
+
+        base_tokenizer_name = tokenizer_desc["base_tokenizer"]
+        parameters = tokenizer_desc["base_tokenizer_parameters"]
+        bpe_tokenizer_json = tokenizer_desc["bpe_tokenizer"]
+
+        tokenizer_generator = BaseTokenizerGenerator()
+        base_tokenizer = tokenizer_generator.generate_tokenizer(name=base_tokenizer_name, parameters=parameters)
+        tokenizer = Tokenizer.from_str(bpe_tokenizer_json)
+        bpe_tokenizer = BpeTokenizer(base_tokenizer=base_tokenizer, bpe_tokenizer=tokenizer)
+
+        return bpe_tokenizer
