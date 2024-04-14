@@ -10,7 +10,7 @@ def main():
     tokenizer.model = models.BPE()
 
     tokenizer.train(["data/maestro-tokenized-one-time.txt"])
-    tokenizer.save("checkpoints/first_tokenizer.json")
+    tokenizer.save("dumps/first_tokenizer.json")
 
 
 if __name__ == "__main__":
