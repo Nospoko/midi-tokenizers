@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 
 from midi_tokenizers.midi_tokenizer import MidiTokenizer
@@ -7,12 +8,17 @@ class NoLossTokenizer(MidiTokenizer):
     def __init__(
         self,
         eps: float = 0.001,
+        n_velocity_bins: int = 128,
     ):
         super().__init__()
         self.eps = eps
+        self.n_velocity_bins = n_velocity_bins
         self.specials = ["<CLS>"]
         self.vocab = self._build_vocab()
         self.token_to_id = {token: it for it, token in enumerate(self.vocab)}
+
+        self.velocity_bin_edges = np.linspace(0, 127, num=n_velocity_bins, endpoint=True).astype(int)
+        self.bin_to_velocity = self._build_velocity_decoder()
 
     def __rich_repr__(self):
         yield "NoLossTokenizer"
@@ -27,7 +33,7 @@ class NoLossTokenizer(MidiTokenizer):
             self.vocab.append(f"NOTE_ON_{pitch}")
             self.vocab.append(f"NOTE_OFF_{pitch}")
 
-        for vel in range(128):
+        for vel in range(self.n_velocity_bins):
             self.vocab.append(f"VELOCITY_{vel}")
 
         token = self.eps
@@ -40,12 +46,23 @@ class NoLossTokenizer(MidiTokenizer):
         self.max_time_token = token  # Maximum time token
         return self.vocab
 
+    def quantize_frame(self, df: pd.DataFrame):
+        df["velocity_bin"] = np.digitize(df.velocity, self.velocity_bin_edges) - 1
+        return df
+
+    def _build_velocity_decoder(self):
+        self.bin_to_velocity = []
+        for it in range(1, len(self.velocity_bin_edges)):
+            velocity = (self.velocity_bin_edges[it - 1] + self.velocity_bin_edges[it]) / 2
+            self.bin_to_velocity.append(int(velocity))
+        return self.bin_to_velocity
+
     @staticmethod
-    def _notes_to_event_df(notes: pd.DataFrame):
+    def _notes_to_events(notes: pd.DataFrame):
         """
-        Convert MIDI note dataframe into a dataframe with on/off events.
+        Convert MIDI note dataframe into a dict with on/off events.
         """
-        note_on_events: pd.DataFrame = notes.loc[:, ["start", "pitch", "velocity"]]
+        note_on_events: pd.DataFrame = notes.loc[:, ["start", "pitch", "velocity_bin"]]
         note_off_events: pd.DataFrame = notes.loc[:, ["end", "pitch"]]
 
         note_off_events["time"] = note_off_events["end"]
@@ -56,15 +73,16 @@ class NoLossTokenizer(MidiTokenizer):
         note_events: pd.DataFrame = pd.concat([note_on_events, note_off_events], axis=0)
         note_events = note_events.sort_values(by="time")
 
-        return note_events
+        return note_events.to_dict(orient="records")
 
     def tokenize(self, notes: pd.DataFrame) -> list[str]:
+        notes = self.quantize_frame(notes)
         tokens = []
         # Time difference between current and previous events
         previous_time = 0
-        note_events = self._notes_to_event_df(notes=notes)
+        note_events = self._notes_to_events(notes=notes)
 
-        for _, current_event in note_events.iterrows():
+        for current_event in note_events:
             # Check timing beginning with the largest step
             current_step = self.max_time_token
             # Calculate the time difference between current and previous event
@@ -84,10 +102,14 @@ class NoLossTokenizer(MidiTokenizer):
                     # Exit the loop when the gap is filled
                     break
 
+            event_type = current_event["event"]
             # Append note event tokens
-            if current_event["event"] == "NOTE_ON":
-                tokens.append(f"VELOCITY_{current_event['velocity']}")
-            tokens.append(f"{current_event['event']}_{current_event['pitch']}")
+            if event_type == "NOTE_ON":
+                velocity = int(current_event["velocity_bin"])
+                tokens.append(f"VELOCITY_{velocity}")
+
+            pitch = int(current_event["pitch"])
+            tokens.append(f"{event_type}_{pitch}")
 
             previous_time = current_event["time"]
 
@@ -105,7 +127,8 @@ class NoLossTokenizer(MidiTokenizer):
                 current_time += dt
             if "VELOCITY" in token:
                 # velocity should always be right before NOTE_ON token
-                current_velocity: int = eval(token[9:])
+                current_velocity_bin: int = eval(token[9:])
+                current_velocity: int = self.bin_to_velocity[current_velocity_bin]
             if "NOTE_ON" in token:
                 note = {
                     "pitch": eval(token[8:]),

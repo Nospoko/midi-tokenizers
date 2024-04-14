@@ -49,12 +49,14 @@ class QuantizedMidiTokenizerFactory(TokenizerFactory):
 class NoLossTokenizerFactory(TokenizerFactory):
     tokenizer_desc = """
     This tokenizer uses multiple time tokens, rising exponentialy from `eps` to 2 seconds.
+    Quantizes velocity into `n_velocity_bins` linearly spread bins.
     """
 
     @staticmethod
     def select_parameters() -> dict:
         eps = st.number_input(label="eps - minimal time shift value", value=0.01, format="%0.3f")
-        return {"eps": eps}
+        n_velocity_bins = st.number_input(label="n_velocity_bins", value=32)
+        return {"eps": eps, "n_velocity_bins": n_velocity_bins}
 
     @staticmethod
     def create_tokenizer(parameters: dict) -> NoLossTokenizer:

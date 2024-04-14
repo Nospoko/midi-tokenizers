@@ -87,8 +87,8 @@ class RelativeTimeQuantizer(MidiQuantizer):
         self.bin_to_velocity = [int(0.8 * self.velocity_bin_edges[1])]
 
         for it in range(2, len(self.velocity_bin_edges)):
-            dstart = (self.velocity_bin_edges[it - 1] + self.velocity_bin_edges[it]) / 2
-            self.bin_to_velocity.append(int(dstart))
+            velocity = (self.velocity_bin_edges[it - 1] + self.velocity_bin_edges[it]) / 2
+            self.bin_to_velocity.append(int(velocity))
 
     def make_vocab(self) -> list[str]:
         vocab = []
