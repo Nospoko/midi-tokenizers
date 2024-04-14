@@ -150,7 +150,7 @@ class NoLossTokenizer(MidiTokenizer):
         current_velocity = 0
         for token in tokens:
             if "s" in token:
-                dt: float = eval(token[:-1])
+                dt: float = self.token_to_dt(token)
                 current_time += dt
             if "VELOCITY" in token:
                 # velocity should always be right before NOTE_ON token
