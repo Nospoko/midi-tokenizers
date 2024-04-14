@@ -23,9 +23,9 @@ def main():
     tokenizer.model = models.BPE()
 
     print("training...")
-    tokenizer.train(["data/maestro-tokenized-one-time.txt"], trainer=trainer)
+    tokenizer.train(["data/maestro-tokenized-one-time-eps-0.015.txt"], trainer=trainer)
     print("saving...")
-    tokenizer.save("dumps/first_tokenizer.json")
+    tokenizer.save("dumps/trained_one_time_bpe_tokenizer-eps-0.015.json")
 
 
 if __name__ == "__main__":

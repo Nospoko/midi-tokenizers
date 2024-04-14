@@ -14,7 +14,7 @@ class BpeTokenizer(MidiTokenizer):
         super().__init__()
         self.base_tokenizer = base_tokenizer
         if path is not None:
-            self.tokenizer = Tokenizer.from_file(path=path)
+            self.tokenizer: Tokenizer = Tokenizer.from_file(path=path)
         else:
             # Initialize tokenizer
             self.tokenizer = Tokenizer(model=models.BPE())
@@ -24,6 +24,8 @@ class BpeTokenizer(MidiTokenizer):
             # Train it on maestro
             train_dataset = load_dataset("roszcz/maestro-sustain-v2", split="train")
             self.train(train_dataset=train_dataset)
+
+        self.vocab = self.tokenizer.get_vocab()
 
     def prepare_data_for_training(self, file_name: str, train_dataset: Dataset):
         def process_record(record):
