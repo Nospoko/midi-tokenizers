@@ -41,7 +41,7 @@ class NoLossTokenizer(MidiTokenizer):
             self.vocab.append(f"VELOCITY_{vel}")
 
         time_vocab = self._time_vocab()
-        self.max_time_token = time_vocab[-1]  # Maximum time token
+        self.max_time_token: float = eval(time_vocab[-1][:-1])  # Maximum time token
         return self.vocab
 
     def _time_vocab(self):
