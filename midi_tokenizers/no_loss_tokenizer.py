@@ -14,7 +14,7 @@ class NoLossTokenizer(MidiTokenizer):
         self.eps = eps
         self.n_velocity_bins = n_velocity_bins
         self.specials = ["<CLS>"]
-        self.vocab, self.token_to_dt = self._build_vocab()
+        self._build_vocab()
         self.token_to_id = {token: it for it, token in enumerate(self.vocab)}
 
         self.velocity_bin_edges = np.linspace(0, 127, num=n_velocity_bins, endpoint=True).astype(int)
@@ -50,8 +50,6 @@ class NoLossTokenizer(MidiTokenizer):
 
         self.token_to_dt = token_to_dt
         self.max_time_value = self.token_to_dt[time_vocab[-1]]  # Maximum time
-
-        return self.vocab, self.token_to_dt
 
     def _time_vocab(self):
         time_vocab = []
