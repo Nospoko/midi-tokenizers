@@ -1,7 +1,8 @@
 import yaml
 import numpy as np
 import pandas as pd
-from quantizer import MidiQuantizer
+
+from quantizers.quantizer import MidiQuantizer
 
 
 class AbsoluteTimeQuantizer(MidiQuantizer):
@@ -12,6 +13,7 @@ class AbsoluteTimeQuantizer(MidiQuantizer):
         n_start_bins: int = 625,
         sequence_duration: float = 20.0,
     ):
+        self.keys = ["pitch", "start_bin", "duration_bin", "velocity_bin"]
         self.n_velocity_bins = n_velocity_bins
         self.n_duration_bins = n_duration_bins
         self.n_start_bins = n_start_bins

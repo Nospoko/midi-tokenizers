@@ -104,3 +104,7 @@ class QuantizerGenerator:
         quantization_cfg = factory.select_parameters()
 
         return factory.create_quantizer(quantization_cfg)
+
+    def generate_quantizer(self, name: str, quantization_cfg: dict) -> MidiQuantizer:
+        factory = self.name_to_factory_map[name]
+        return factory.create_quantizer(quantization_cfg)

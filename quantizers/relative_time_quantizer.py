@@ -1,7 +1,8 @@
 import yaml
 import numpy as np
 import pandas as pd
-from quantizer import MidiQuantizer
+
+from quantizers.quantizer import MidiQuantizer
 
 
 class RelativeTimeQuantizer(MidiQuantizer):
@@ -11,6 +12,7 @@ class RelativeTimeQuantizer(MidiQuantizer):
         n_duration_bins: int = 3,
         n_velocity_bins: int = 3,
     ):
+        self.keys = ["pitch", "dstart_bin", "duration_bin", "velocity_bin"]
         self.n_dstart_bins = n_dstart_bins
         self.n_duration_bins = n_duration_bins
         self.n_velocity_bins = n_velocity_bins
@@ -85,8 +87,8 @@ class RelativeTimeQuantizer(MidiQuantizer):
         self.bin_to_velocity = [int(0.8 * self.velocity_bin_edges[1])]
 
         for it in range(2, len(self.velocity_bin_edges)):
-            dstart = (self.velocity_bin_edges[it - 1] + self.velocity_bin_edges[it]) / 2
-            self.bin_to_velocity.append(int(dstart))
+            velocity = (self.velocity_bin_edges[it - 1] + self.velocity_bin_edges[it]) / 2
+            self.bin_to_velocity.append(int(velocity))
 
     def make_vocab(self) -> list[str]:
         vocab = []

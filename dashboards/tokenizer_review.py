@@ -4,7 +4,7 @@ import streamlit_pianoroll
 from fortepyan import MidiPiece
 from datasets import Dataset, load_dataset
 
-from quantizer_generator import QuantizerGenerator
+from tokenizer_generator import TokenizerGenerator
 
 
 @st.cache_data
@@ -50,15 +50,16 @@ def select_record(midi_dataset: Dataset):
 
 
 def main():
-    quantizer_generator = QuantizerGenerator()
+    tokenizer_generator = TokenizerGenerator()
 
-    quantizer_names = quantizer_generator.name_to_factory_map.keys()
-    quantizer_name = st.selectbox(label="quantizer", options=quantizer_names)
+    tokenizer_names = tokenizer_generator.name_to_factory_map.keys()
+    tokenizer_name = st.selectbox(label="tokenizer", options=tokenizer_names)
 
-    st.write(quantizer_generator.quantization_info(name=quantizer_name))
-    with st.form("quantizer generation"):
-        quantizer = quantizer_generator.generate_quantizer_with_streamlit(quantizer_name)
+    st.write(tokenizer_generator.tokenizer_info(name=tokenizer_name))
+    with st.form("tokenizer generation"):
+        tokenizer = tokenizer_generator.generate_tokenizer_with_streamlit(tokenizer_name)
         st.form_submit_button("Run")
+    st.write(f"vocab size: {tokenizer.vocab_size}")
 
     midi_dataset = select_dataset()
 
@@ -72,15 +73,23 @@ def main():
     finish = fragment_selection_columns[1].number_input(f"finish [0-{end}]", value=60.0)
     piece = piece.trim(start, finish)
 
-    quantized_piece = quantizer.quantize_piece(piece=piece)
+    tokens = tokenizer.tokenize(piece.df)
+    untokenized_notes = tokenizer.untokenize(tokens=tokens)
+
+    untokenized_piece = MidiPiece(df=untokenized_notes, source=piece.source | {"tokenized": True})
 
     review_columns = st.columns(2)
     with review_columns[0]:
         st.write("Original piece")
         streamlit_pianoroll.from_fortepyan(piece=piece)
     with review_columns[1]:
-        st.write("Quantized piece")
-        streamlit_pianoroll.from_fortepyan(piece=quantized_piece)
+        st.write("Untokenized piece")
+        streamlit_pianoroll.from_fortepyan(piece=untokenized_piece)
+
+    st.write(f"number of tokens: {len(tokens)}")
+
+    with st.expander(label="tokens"):
+        st.write(tokens)
 
 
 if __name__ == "__main__":
