@@ -5,6 +5,7 @@ import streamlit as st
 from quantizer_generator import QuantizerGenerator
 from midi_tokenizers.midi_tokenizer import MidiTokenizer
 from midi_tokenizers.no_loss_tokenizer import NoLossTokenizer
+from midi_tokenizers.one_time_tokenizer import OneTimeTokenizer
 from midi_tokenizers.quantized_midi_tokenizer import QuantizedMidiTokenizer
 
 
@@ -64,11 +65,30 @@ class NoLossTokenizerFactory(TokenizerFactory):
         return NoLossTokenizer(**parameters)
 
 
+class OneTimeTokenizerFactory(TokenizerFactory):
+    tokenizer_desc = """
+    This tokenizer uses a single time token and uses it as many times as it needs.
+
+    Quantizes velocity into `n_velocity_bins` linearly spread bins.
+    """
+
+    @staticmethod
+    def select_parameters() -> dict:
+        eps = st.number_input(label="eps - minimal time shift value", value=0.1, format="%0.3f")
+        n_velocity_bins = st.number_input(label="n_velocity_bins", value=32)
+        return {"eps": eps, "n_velocity_bins": n_velocity_bins}
+
+    @staticmethod
+    def create_tokenizer(parameters: dict) -> NoLossTokenizer:
+        return OneTimeTokenizer(**parameters)
+
+
 class TokenizerGenerator:
     # append new factories to this dict when new Tokenizers are defined.
     name_to_factory_map: dict[str, "TokenizerFactory"] = {
         "QuantizedMidiTokenizer": QuantizedMidiTokenizerFactory(),
         "NoLossTokenizer": NoLossTokenizerFactory(),
+        "OneTimeTokenizer": OneTimeTokenizerFactory(),
     }
 
     def tokenizer_info(self, name: str):

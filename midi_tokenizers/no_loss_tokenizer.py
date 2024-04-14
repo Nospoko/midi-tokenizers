@@ -40,15 +40,19 @@ class NoLossTokenizer(MidiTokenizer):
         for vel in range(self.n_velocity_bins):
             self.vocab.append(f"VELOCITY_{vel}")
 
+        time_vocab = self._time_vocab()
+        self.max_time_token = time_vocab[-1]  # Maximum time token
+        return self.vocab
+
+    def _time_vocab(self):
+        time_vocab = []
         token = self.eps
 
         # Generate time tokens with exponential distribution
         while token < 1:
-            self.vocab.append(f"{token}s")
+            time_vocab.append(f"{token}s")
             token *= 2
-
-        self.max_time_token = token  # Maximum time token
-        return self.vocab
+        return time_vocab
 
     def quantize_frame(self, df: pd.DataFrame):
         df["velocity_bin"] = np.digitize(df.velocity, self.velocity_bin_edges) - 1
