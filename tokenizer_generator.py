@@ -49,6 +49,7 @@ class QuantizedMidiTokenizerFactory(TokenizerFactory):
 class NoLossTokenizerFactory(TokenizerFactory):
     tokenizer_desc = """
     This tokenizer uses multiple time tokens, rising exponentialy from `eps` to 2 seconds.
+
     Quantizes velocity into `n_velocity_bins` linearly spread bins.
     """
 

@@ -59,6 +59,7 @@ def main():
     with st.form("tokenizer generation"):
         tokenizer = tokenizer_generator.generate_tokenizer_with_streamlit(tokenizer_name)
         st.form_submit_button("Run")
+    st.write(f"vocab size: {tokenizer.vocab_size}")
 
     midi_dataset = select_dataset()
 

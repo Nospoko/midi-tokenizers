@@ -6,6 +6,7 @@ import pandas as pd
 class MidiTokenizer:
     def __init__(self):
         self.token_to_id = None
+        self.vocab = []
 
     @abstractmethod
     def tokenize(self, record: dict) -> list[str]:
@@ -14,6 +15,10 @@ class MidiTokenizer:
     @abstractmethod
     def untokenize(self, tokens: list[str]) -> pd.DataFrame:
         raise NotImplementedError("Your encoder needs *untokenize* implementation")
+
+    @property
+    def vocab_size(self) -> int:
+        return len(self.vocab)
 
     def decode(self, token_ids: list[int]) -> pd.DataFrame:
         tokens = [self.vocab[token_id] for token_id in token_ids]

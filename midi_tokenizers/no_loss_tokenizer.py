@@ -25,6 +25,10 @@ class NoLossTokenizer(MidiTokenizer):
         yield "eps", self.eps
         yield "vocab_size", self.vocab_size
 
+    @property
+    def vocab_size(self) -> int:
+        return len(self.vocab)
+
     def _build_vocab(self):
         self.vocab = list(self.specials)
 
