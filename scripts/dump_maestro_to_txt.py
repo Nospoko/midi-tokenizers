@@ -5,7 +5,7 @@ from midi_tokenizers.one_time_tokenizer import OneTimeTokenizer
 
 
 def main():
-    dataset = load_dataset("roszcz/maestro-sustain-v2", split="train")
+    dataset = load_dataset("roszcz/maestro-sustain-v2", split="test")
     eps = 0.015
     n_velocity_bins = 32
 
@@ -15,8 +15,9 @@ def main():
         for record in dataset:
             notes = pd.DataFrame(record["notes"])
             tokens = tokenizer.tokenize(notes=notes)
-            for token in tokens:
+            for it, token in enumerate(tokens):
                 file.write(str(token) + " ")
+
             file.write("\n")
 
 
