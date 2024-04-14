@@ -74,7 +74,7 @@ class OneTimeTokenizerFactory(TokenizerFactory):
 
     @staticmethod
     def select_parameters() -> dict:
-        eps = st.number_input(label="eps - minimal time shift value", value=0.1, format="%0.3f")
+        eps = st.number_input(label="eps - minimal time shift value", value=0.01, format="%0.3f")
         n_velocity_bins = st.number_input(label="n_velocity_bins", value=32)
         return {"eps": eps, "n_velocity_bins": n_velocity_bins}
 
