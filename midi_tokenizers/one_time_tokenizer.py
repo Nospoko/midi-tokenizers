@@ -10,4 +10,4 @@ class OneTimeTokenizer(NoLossTokenizer):
         super().__init__(eps=eps, n_velocity_bins=n_velocity_bins)
 
     def _time_vocab(self):
-        return [f"{self.eps}s"]
+        return [f"{self.eps}s"], {f"{self.eps}s": self.eps}

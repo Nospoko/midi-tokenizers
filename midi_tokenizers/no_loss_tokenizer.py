@@ -14,7 +14,7 @@ class NoLossTokenizer(MidiTokenizer):
         self.eps = eps
         self.n_velocity_bins = n_velocity_bins
         self.specials = ["<CLS>"]
-        self.vocab = self._build_vocab()
+        self.vocab, self.token_to_dt = self._build_vocab()
         self.token_to_id = {token: it for it, token in enumerate(self.vocab)}
 
         self.velocity_bin_edges = np.linspace(0, 127, num=n_velocity_bins, endpoint=True).astype(int)
@@ -31,28 +31,36 @@ class NoLossTokenizer(MidiTokenizer):
 
     def _build_vocab(self):
         self.vocab = list(self.specials)
+        self.token_to_velocity_bin = {}
+        self.token_to_pitch = {}
+        self.token_to_dt = {}
 
         # Add MIDI note and velocity tokens to the vocabulary
         for pitch in range(21, 109):
             self.vocab.append(f"NOTE_ON_{pitch}")
             self.vocab.append(f"NOTE_OFF_{pitch}")
+            self.token_to_pitch |= {f"NOTE_ON_{pitch}": pitch, f"NOTE_OFF_{pitch}": pitch}
 
         for vel in range(self.n_velocity_bins):
             self.vocab.append(f"VELOCITY_{vel}")
+            self.token_to_velocity_bin |= {f"VELOCITY_{vel}": vel}
 
-        time_vocab = self._time_vocab()
-        self.max_time_token: float = eval(time_vocab[-1][:-1])  # Maximum time token
-        return self.vocab
+        time_vocab, token_to_dt = self._time_vocab()
+        self.token_to_dt = token_to_dt
+        self.max_time_value = float(time_vocab[-1][:-1])  # Maximum time
+        return self.vocab, self.token_to_dt
 
     def _time_vocab(self):
         time_vocab = []
-        token = self.eps
+        token_to_dt = {}
 
+        dt = self.eps
         # Generate time tokens with exponential distribution
-        while token < 1:
-            time_vocab.append(f"{token}s")
-            token *= 2
-        return time_vocab
+        while dt < 1:
+            time_vocab.append(f"{dt}s")
+            token_to_dt |= {f"{dt}s": dt}
+            dt *= 2
+        return time_vocab, token_to_dt
 
     def quantize_frame(self, df: pd.DataFrame):
         df["velocity_bin"] = np.digitize(df.velocity, self.velocity_bin_edges) - 1
@@ -85,6 +93,27 @@ class NoLossTokenizer(MidiTokenizer):
         note_events = sorted(note_events, key=lambda event: event["time"])
         return note_events
 
+    def tokenize_time_distance(self, dt: float) -> list[str]:
+        # Try filling the time beginning with the largest step
+        current_step = self.max_time_value
+
+        time_tokens = []
+        filling_dt = 0
+        current_step = self.max_time_value
+        while True:
+            if filling_dt + current_step > dt:
+                # Select time step that will fit into the gap
+                current_step /= 2
+            else:
+                # Fill the gap with current time token
+                time_tokens.append(f"{current_step}s")
+                filling_dt += current_step
+
+            if dt - filling_dt < self.eps:
+                # Exit the loop when the gap is filled
+                break
+        return time_tokens
+
     def tokenize(self, notes: pd.DataFrame) -> list[str]:
         notes = self.quantize_frame(notes)
         tokens = []
@@ -93,24 +122,12 @@ class NoLossTokenizer(MidiTokenizer):
         note_events = self._notes_to_events(notes=notes)
 
         for current_event in note_events:
-            # Check timing beginning with the largest step
-            current_step = self.max_time_token
             # Calculate the time difference between current and previous event
             dt = current_event["time"] - previous_time
-            filling_dt = 0  # filled time difference
-            # Fill the time gap
-            while True:
-                if filling_dt + current_step > dt:
-                    # Select time step that will fit into the gap
-                    current_step /= 2
-                else:
-                    # Fill the gap with current time token
-                    tokens.append(f"{current_step}s")
-                    filling_dt += current_step
 
-                if dt - filling_dt < self.eps:
-                    # Exit the loop when the gap is filled
-                    break
+            # Fill the time gap
+            time_tokens = self.tokenize_time_distance(dt=dt)
+            tokens += time_tokens
 
             event_type = current_event["event"]
             # Append note event tokens
@@ -137,18 +154,18 @@ class NoLossTokenizer(MidiTokenizer):
                 current_time += dt
             if "VELOCITY" in token:
                 # velocity should always be right before NOTE_ON token
-                current_velocity_bin: int = eval(token[9:])
+                current_velocity_bin = self.token_to_velocity_bin[token]
                 current_velocity: int = self.bin_to_velocity[current_velocity_bin]
             if "NOTE_ON" in token:
                 note = {
-                    "pitch": eval(token[8:]),
+                    "pitch": self.token_to_pitch[token],
                     "start": current_time,
                     "velocity": current_velocity,
                 }
                 note_on_events.append(note)
             if "NOTE_OFF" in token:
                 note = {
-                    "pitch": eval(token[9:]),
+                    "pitch": self.token_to_pitch[token],
                     "end": current_time,
                 }
                 note_off_events.append(note)
