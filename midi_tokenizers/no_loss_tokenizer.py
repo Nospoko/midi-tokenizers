@@ -64,12 +64,12 @@ class NoLossTokenizer(MidiTokenizer):
         """
         note_on_df: pd.DataFrame = notes.loc[:, ["start", "pitch", "velocity_bin"]]
         note_off_df: pd.DataFrame = notes.loc[:, ["end", "pitch"]]
-        
+
         note_off_df["time"] = note_off_df["end"]
         note_off_df["event"] = "NOTE_OFF"
         note_on_df["time"] = note_on_df["start"]
         note_on_df["event"] = "NOTE_ON"
-        
+
         note_on_events = note_on_df.to_dict(orient="records")
         note_off_events = note_off_df.to_dict(orient="records")
         note_events = note_on_events + note_off_events
