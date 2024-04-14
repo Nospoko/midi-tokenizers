@@ -64,7 +64,7 @@ class NoLossTokenizer(MidiTokenizer):
         return time_vocab, token_to_dt
 
     def quantize_frame(self, df: pd.DataFrame):
-        df["velocity_bin"] = np.digitize(df.velocity, self.velocity_bin_edges) - 1
+        df["velocity_bin"] = np.digitize(df["velocity"], self.velocity_bin_edges) - 1
         return df
 
     def _build_velocity_decoder(self):
