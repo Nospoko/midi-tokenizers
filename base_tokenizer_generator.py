@@ -86,9 +86,9 @@ class OneTimeTokenizerFactory(TokenizerFactory):
 class BaseTokenizerGenerator:
     # append new factories to this dict when new Tokenizers are defined.
     name_to_factory_map: dict[str, "TokenizerFactory"] = {
-        "QuantizedMidiTokenizer": QuantizedMidiTokenizerFactory(),
         "NoLossTokenizer": NoLossTokenizerFactory(),
         "OneTimeTokenizer": OneTimeTokenizerFactory(),
+        "QuantizedMidiTokenizer": QuantizedMidiTokenizerFactory(),
     }
 
     def tokenizer_info(self, name: str):
