@@ -2,8 +2,8 @@ from glob import glob
 
 import streamlit as st
 
-from midi_tokenizers.bpe_tokenizer import BpeTokenizer
 from midi_tokenizers.midi_tokenizer import MidiTokenizer
+from midi_trainable_tokenizers.bpe_tokenizer import BpeTokenizer
 from base_tokenizer_generator import TokenizerFactory, BaseTokenizerGenerator
 
 

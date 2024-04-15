@@ -10,18 +10,24 @@ from tokenizers import Regex, Tokenizer, models, trainers, pre_tokenizers
 from midi_tokenizers.midi_tokenizer import MidiTokenizer
 from base_tokenizer_generator import BaseTokenizerGenerator
 
+from midi_trainable_tokenizers.trainable_tokenizer import MidiTrainableTokenizer
 
-class BpeTokenizer(MidiTokenizer):
+
+class BpeTokenizer(MidiTrainableTokenizer):
     def __init__(self, base_tokenizer: MidiTokenizer, bpe_tokenizer: Tokenizer = None):
         super().__init__()
         self.base_tokenizer = base_tokenizer
         self.tokenizer = bpe_tokenizer
+        self.vocab = bpe_tokenizer.get_vocab()
+        
 
         if self.tokenizer is None:
-            # Initialize empty tokenizer
+            # Initialize empty tokenizer and a trainer
             self.tokenizer = Tokenizer(model=models.BPE())
             self.tokenizer.pre_tokenizer = self.prepare_text_pre_tokenizer()
             self.tokenizer.model = models.BPE()
+            self.trainer = trainers.BpeTrainer(max_token_length=512, special_tokens=["<CLS>"])
+            self.vocab = self.tokenizer.get_vocab()
 
     def prepare_data_for_training(self, file_name: str, train_dataset: Dataset):
         def process_record(record):
@@ -62,6 +68,8 @@ class BpeTokenizer(MidiTokenizer):
         trainer = trainers.BpeTrainer(max_token_length=512, special_tokens=["<CLS>"])
         self.tokenizer.model = models.BPE()
         self.tokenizer.train([file.name], trainer=trainer)
+        
+        self.vocab = self.tokenizer.get_vocab()
 
     def tokenize(self, notes: pd.DataFrame) -> list[str]:
         tokens = self.base_tokenizer.tokenize(notes)
