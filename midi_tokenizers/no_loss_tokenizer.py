@@ -1,3 +1,5 @@
+import re
+
 import numpy as np
 import pandas as pd
 
@@ -37,37 +39,58 @@ class NoLossTokenizer(MidiTokenizer):
 
     def _build_vocab(self):
         self.vocab = list(self.specials)
+
         self.token_to_velocity_bin = {}
+        self.velocity_bin_to_token = {}
+
         self.token_to_pitch = {}
+        self.pitch_to_on_token = {}
+        self.pitch_to_off_token = {}
+
         self.token_to_dt = {}
+        self.dt_to_token = []
 
         # Add MIDI note and velocity tokens to the vocabulary
         for pitch in range(21, 109):
-            self.vocab.append(f"NOTE_ON_{pitch}")
-            self.vocab.append(f"NOTE_OFF_{pitch}")
-            self.token_to_pitch |= {f"NOTE_ON_{pitch}": pitch, f"NOTE_OFF_{pitch}": pitch}
+            note_on_token = f"NOTE_ON_{pitch}"
+            note_off_token = f"NOTE_OFF_{pitch}"
+
+            self.vocab.append(note_on_token)
+            self.vocab.append(note_off_token)
+
+            self.token_to_pitch |= {note_on_token: pitch, note_off_token: pitch}
+            self.pitch_to_on_token |= {pitch: note_on_token}
+            self.pitch_to_off_token |= {pitch: note_off_token}
 
         for vel in range(self.n_velocity_bins):
-            self.vocab.append(f"VELOCITY_{vel}")
-            self.token_to_velocity_bin |= {f"VELOCITY_{vel}": vel}
+            velocity_token = f"VELOCITY_{vel}"
+            self.vocab.append(velocity_token)
+            self.token_to_velocity_bin |= {velocity_token: vel}
+            self.velocity_bin_to_token |= {vel: velocity_token}
 
-        time_vocab, token_to_dt = self._time_vocab()
+        time_vocab, token_to_dt, dt_to_token = self._time_vocab()
         self.vocab += time_vocab
 
         self.token_to_dt = token_to_dt
+        self.dt_to_token = dt_to_token
         self.max_time_value = self.token_to_dt[time_vocab[-1]]  # Maximum time
 
     def _time_vocab(self):
         time_vocab = []
         token_to_dt = {}
+        dt_to_token = {}
 
+        dt_it = 1
         dt = self.eps
         # Generate time tokens with exponential distribution
         while dt < 1:
-            time_vocab.append(f"{dt}s")
-            token_to_dt |= {f"{dt}s": dt}
+            time_token = f"{dt_it}T"
+            time_vocab.append(time_token)
+            dt_to_token |= {dt: time_token}
+            token_to_dt |= {time_token: dt}
             dt *= 2
-        return time_vocab, token_to_dt
+            dt_it += 1
+        return time_vocab, token_to_dt, dt_to_token
 
     def quantize_frame(self, df: pd.DataFrame):
         df["velocity_bin"] = np.digitize(df["velocity"], self.velocity_bin_edges) - 1
@@ -113,7 +136,8 @@ class NoLossTokenizer(MidiTokenizer):
                 current_step /= 2
             else:
                 # Fill the gap with current time token
-                time_tokens.append(f"{current_step}s")
+                time_token = self.dt_to_token[current_step]
+                time_tokens.append(time_token)
                 filling_dt += current_step
 
             if dt - filling_dt < self.eps:
@@ -137,13 +161,15 @@ class NoLossTokenizer(MidiTokenizer):
             tokens += time_tokens
 
             event_type = current_event["event"]
+
             # Append note event tokens
+            pitch = int(current_event["pitch"])
             if event_type == "NOTE_ON":
                 velocity = int(current_event["velocity_bin"])
-                tokens.append(f"VELOCITY_{velocity}")
-
-            pitch = int(current_event["pitch"])
-            tokens.append(f"{event_type}_{pitch}")
+                tokens.append(self.velocity_bin_to_token[velocity])
+                tokens.append(self.pitch_to_on_token[pitch])
+            else:
+                tokens.append(self.pitch_to_off_token[pitch])
 
             previous_time = current_event["time"]
 
@@ -156,7 +182,7 @@ class NoLossTokenizer(MidiTokenizer):
         current_time = 0
         current_velocity = 0
         for token in tokens:
-            if "s" in token:
+            if re.search("^.T$", token) is not None:
                 dt: float = self.token_to_dt[token]
                 current_time += dt
             if "VELOCITY" in token:

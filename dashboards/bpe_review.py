@@ -103,7 +103,7 @@ def main():
     st.write(
         """
             This is done during training step on text data.
-            The weird G tokens replace spaces. (It happenes inside ByteLever pre-tokenizer)
+            The weird G tokens replace spaces. (It happenes inside ByteLevel pre-tokenizer)
         """
     )
 

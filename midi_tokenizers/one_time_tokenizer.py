@@ -11,4 +11,4 @@ class OneTimeTokenizer(NoLossTokenizer):
         self.name = "OneTimeTokenizer"
 
     def _time_vocab(self):
-        return [f"{self.eps}s"], {f"{self.eps}s": self.eps}
+        return ["1T"], {"1T": self.eps}, {self.eps: "1T"}
