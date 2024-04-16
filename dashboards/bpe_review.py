@@ -9,7 +9,7 @@ from fortepyan import MidiPiece
 from datasets import Dataset, load_dataset
 from tokenizers.pre_tokenizers import PreTokenizer
 
-from midi_trainable_tokenizers.bpe_tokenizer import BpeTokenizer
+from midi_trainable_tokenizers.bpe_tokenizer import BpeMidiTokenizer
 from object_generators.base_tokenizer_generator import BaseTokenizerGenerator
 
 
@@ -105,12 +105,12 @@ def main():
     )
     text_dataset = buffer.splitlines()
 
-    with st.expander("Example of a record turned into text by a base_tokenizer:"):
+    with st.expander("Example of a midi data turned into text by a base_tokenizer:"):
         st.write(text_dataset[0][:250] + " [...]")
 
-    # initialize empty Tokenizer
-    tokenizer = BpeTokenizer(base_tokenizer=base_tokenizer)
-
+    # initialize empty Tokenizer ...
+    tokenizer = BpeMidiTokenizer(base_tokenizer=base_tokenizer)
+    # and get its pre-tokenizer
     pre_tokenizer: PreTokenizer = tokenizer.tokenizer.pre_tokenizer
     pre_tokenized_data = pre_tokenizer.pre_tokenize_str(text_dataset[0])
     pre_tokenized_data = [token_info[0] for token_info in pre_tokenized_data]
@@ -139,8 +139,21 @@ def main():
         """
     )
 
-    with st.expander(label="Example of a record pre-tokenized by pre-tokenizers inside the huggingface tokenizer:"):
+    with st.expander(label="Example of a pre-tokenized text:"):
         st.write(pre_tokenized_data[:50])
+
+    st.write(
+        """
+        #### BpeMidiTokenizer
+        HF BpeTokenizer will compose a vocabulary of maximum size specified by vocab_size argument to HF BpeTrainer.
+        Creating too large vocabulary on a small dataset will make all the different time differences seperate tokens.
+        This will make multiple time tokens between note event a rarity and make it impossible for LLM to learn
+        other structure than note_event_token - time_token - note_event_token - time_token - ...,
+        but we can always experiment.
+        """
+    )
+    max_vocab_size = st.number_input(label="max_vocab_size", value=500)
+    tokenizer = BpeMidiTokenizer(base_tokenizer=base_tokenizer, max_vocab_size=max_vocab_size)
 
     # training the BPE tokenizer
     tokenizer.train_from_text_dataset(dataset=text_dataset)
@@ -165,7 +178,7 @@ def main():
         """
     )
     st.button(label="save tokenizer", on_click=save_tokenizer)
-
+    st.write(f"BpeMidiTokenizer vocab size: {tokenizer.vocab_size}")
     st.write("### Test the tokenizer")
     record = select_record(midi_dataset=midi_dataset)
     piece = MidiPiece.from_huggingface(record=record)

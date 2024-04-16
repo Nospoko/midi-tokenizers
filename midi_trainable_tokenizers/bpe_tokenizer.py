@@ -11,19 +11,27 @@ from object_generators.base_tokenizer_generator import BaseTokenizerGenerator
 from midi_trainable_tokenizers.trainable_tokenizer import MidiTrainableTokenizer
 
 
-class BpeTokenizer(MidiTrainableTokenizer):
-    def __init__(self, base_tokenizer: MidiTokenizer, bpe_tokenizer: Tokenizer = None):
+class BpeMidiTokenizer(MidiTrainableTokenizer):
+    def __init__(self, base_tokenizer: MidiTokenizer, bpe_tokenizer: Tokenizer = None, max_vocab_size: int = None):
         super().__init__()
         self.base_tokenizer = base_tokenizer
         self.tokenizer = bpe_tokenizer
         self.name = "BpeTokenizer"
+        self.max_vocab_size = max_vocab_size
+
+        if self.max_vocab_size is None:
+            self.max_vocab_size = 30000  # default BpeTrainer vocab_size
 
         if self.tokenizer is None:
             # Initialize empty tokenizer and a trainer
             self.tokenizer = Tokenizer(model=models.BPE())
             self.tokenizer.pre_tokenizer = self.prepare_text_pre_tokenizer()
             self.tokenizer.model = models.BPE()
-            self.trainer = trainers.BpeTrainer(max_token_length=512, special_tokens=["<CLS>"])
+            self.trainer = trainers.BpeTrainer(
+                vocab_size=self.max_vocab_size,
+                max_token_length=512,
+                special_tokens=["<CLS>"],
+            )
 
         self.vocab = self.tokenizer.get_vocab()
 
@@ -40,20 +48,20 @@ class BpeTokenizer(MidiTrainableTokenizer):
 
     def prepare_text_pre_tokenizer(self):
         # We have to use this - we cannot load saved tokenizer otherwise
-        byte_level_tokenizer = pre_tokenizers.ByteLevel(add_prefix_space=True, use_regex=False)
+        byte_level_tokenizer = pre_tokenizers.ByteLevel(add_prefix_space=False, use_regex=False)
 
         # split the tokens into groups before training (concatenate only time tokens and velocity+note_on tokens)
-        note_on_splitter = pre_tokenizers.Split(Regex(f"VELOCITY_.?{chr(288)}NOTE_ON_.."), behavior="isolated")
+        note_on_splitter = pre_tokenizers.Split(Regex("VELOCITY_..? NOTE_ON_.."), behavior="isolated")
         note_off_splitter = pre_tokenizers.Split(Regex("NOTE_OFF_.."), behavior="isolated")
 
         # in the txt file, new records begin with a newline
         end_line_splitter = pre_tokenizers.Split("\n", behavior="removed")
 
         text_pre_tokenizers = [
-            byte_level_tokenizer,
             end_line_splitter,
             note_on_splitter,
             note_off_splitter,
+            byte_level_tokenizer,
         ]
         return pre_tokenizers.Sequence(text_pre_tokenizers)
 
@@ -82,7 +90,7 @@ class BpeTokenizer(MidiTrainableTokenizer):
             json.dump(tokenizer_desc, f)
 
     @staticmethod
-    def from_file(path: str) -> "BpeTokenizer":
+    def from_file(path: str) -> "BpeMidiTokenizer":
         with open(path, "r") as f:
             tokenizer_desc = json.load(f)
 
@@ -93,6 +101,6 @@ class BpeTokenizer(MidiTrainableTokenizer):
         tokenizer_generator = BaseTokenizerGenerator()
         base_tokenizer = tokenizer_generator.generate_tokenizer(name=base_tokenizer_name, parameters=parameters)
         tokenizer = Tokenizer.from_str(bpe_tokenizer_json)
-        bpe_tokenizer = BpeTokenizer(base_tokenizer=base_tokenizer, bpe_tokenizer=tokenizer)
+        bpe_tokenizer = BpeMidiTokenizer(base_tokenizer=base_tokenizer, bpe_tokenizer=tokenizer)
 
         return bpe_tokenizer
