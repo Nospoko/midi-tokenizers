@@ -7,7 +7,7 @@ from datasets import Dataset
 from tokenizers import Regex, Tokenizer, models, trainers, pre_tokenizers
 
 from midi_tokenizers.midi_tokenizer import MidiTokenizer
-from base_tokenizer_generator import BaseTokenizerGenerator
+from object_generators.base_tokenizer_generator import BaseTokenizerGenerator
 from midi_trainable_tokenizers.trainable_tokenizer import MidiTrainableTokenizer
 
 

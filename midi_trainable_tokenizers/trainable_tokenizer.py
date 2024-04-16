@@ -29,3 +29,7 @@ class MidiTrainableTokenizer(MidiTokenizer):
         self.tokenizer.train_from_iterator(dataset, trainer=self.trainer)
 
         self.vocab = self.tokenizer.get_vocab()
+
+    @abstractmethod
+    def save_tokenizer(self, path: str):
+        pass

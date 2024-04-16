@@ -1,8 +1,8 @@
 from abc import abstractmethod
 
 import streamlit as st
-
 from quantizer_generator import QuantizerGenerator
+
 from midi_tokenizers.midi_tokenizer import MidiTokenizer
 from midi_tokenizers.no_loss_tokenizer import NoLossTokenizer
 from midi_tokenizers.one_time_tokenizer import OneTimeTokenizer

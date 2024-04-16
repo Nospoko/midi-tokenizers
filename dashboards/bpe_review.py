@@ -8,8 +8,8 @@ from fortepyan import MidiPiece
 from datasets import Dataset, load_dataset
 from tokenizers.pre_tokenizers import PreTokenizer
 
-from base_tokenizer_generator import BaseTokenizerGenerator
 from midi_trainable_tokenizers.bpe_tokenizer import BpeTokenizer
+from object_generators.base_tokenizer_generator import BaseTokenizerGenerator
 
 
 @st.cache_data
