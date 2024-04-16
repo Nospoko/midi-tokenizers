@@ -131,7 +131,7 @@ class NoLossTokenizer(MidiTokenizer):
         filling_dt = 0
         current_step = self.max_time_value
         while True:
-            if filling_dt + current_step > dt:
+            if filling_dt + current_step - dt > self.eps:
                 # Select time step that will fit into the gap
                 current_step /= 2
             else:
@@ -140,7 +140,7 @@ class NoLossTokenizer(MidiTokenizer):
                 time_tokens.append(time_token)
                 filling_dt += current_step
 
-            if dt - filling_dt < self.eps:
+            if abs(dt - filling_dt) < self.eps:
                 # Exit the loop when the gap is filled
                 break
         return time_tokens
