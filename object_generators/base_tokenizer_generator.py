@@ -1,11 +1,11 @@
 from abc import abstractmethod
 
 import streamlit as st
-from quantizer_generator import QuantizerGenerator
 
 from midi_tokenizers.midi_tokenizer import MidiTokenizer
 from midi_tokenizers.no_loss_tokenizer import NoLossTokenizer
 from midi_tokenizers.one_time_tokenizer import OneTimeTokenizer
+from object_generators.quantizer_generator import QuantizerGenerator
 from midi_tokenizers.quantized_midi_tokenizer import QuantizedMidiTokenizer
 
 
@@ -49,7 +49,7 @@ class QuantizedMidiTokenizerFactory(TokenizerFactory):
 
 class NoLossTokenizerFactory(TokenizerFactory):
     tokenizer_desc = """
-    This tokenizer uses multiple time tokens, rising exponentialy from `eps` to 2 seconds.
+    This tokenizer uses multiple time tokens, rising exponentialy from `eps` to 1 seconds.
 
     Quantizes velocity into `n_velocity_bins` linearly spread bins.
     """
@@ -67,7 +67,7 @@ class NoLossTokenizerFactory(TokenizerFactory):
 
 class OneTimeTokenizerFactory(TokenizerFactory):
     tokenizer_desc = """
-    This tokenizer uses a single time token and uses it as many times as it needs.
+    This tokenizer uses a single time token and appends it as many times as it needs.
 
     Quantizes velocity into `n_velocity_bins` linearly spread bins.
     """

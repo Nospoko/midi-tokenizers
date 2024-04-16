@@ -1,9 +1,9 @@
 import itertools
 
 import pandas as pd
-from quantizer_generator import QuantizerGenerator
 
 from midi_tokenizers.midi_tokenizer import MidiTokenizer
+from object_generators.quantizer_generator import QuantizerGenerator
 
 
 class QuantizedMidiTokenizer(MidiTokenizer):
