@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(
-    name="midi-tokenizers",
+    name="midi_tokenizers",
     py_modules=[
         'midi_tokenizers', 
         'midi_trainable_tokenizers', 
