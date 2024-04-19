@@ -104,7 +104,7 @@ class NoLossTokenizer(MidiTokenizer):
         return self.bin_to_velocity
 
     @staticmethod
-    def _notes_to_events(notes: pd.DataFrame):
+    def _notes_to_events(notes: pd.DataFrame) -> list[dict]:
         """
         Convert MIDI note dataframe into a dict with on/off events.
         """
@@ -131,6 +131,9 @@ class NoLossTokenizer(MidiTokenizer):
         filling_dt = 0
         current_step = self.max_time_value
         while True:
+            if abs(dt - filling_dt) < self.eps:
+                # Exit the loop when the gap is filled
+                break
             if filling_dt + current_step - dt > self.eps:
                 # Select time step that will fit into the gap
                 current_step /= 2
@@ -140,9 +143,6 @@ class NoLossTokenizer(MidiTokenizer):
                 time_tokens.append(time_token)
                 filling_dt += current_step
 
-            if abs(dt - filling_dt) < self.eps:
-                # Exit the loop when the gap is filled
-                break
         return time_tokens
 
     def tokenize(self, notes: pd.DataFrame) -> list[str]:
