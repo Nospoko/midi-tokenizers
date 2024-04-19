@@ -52,7 +52,7 @@ class BpeMidiTokenizer(MidiTrainableTokenizer):
 
         # split the tokens into groups before training (concatenate only time tokens and velocity+note_on tokens)
         note_on_splitter = pre_tokenizers.Split(Regex("VELOCITY_..? NOTE_ON_.."), behavior="isolated")
-        note_off_splitter = pre_tokenizers.Split(Regex("NOTE_OFF_.."), behavior="isolated")
+        note_off_splitter = pre_tokenizers.Split(Regex("VELOCITY_..? NOTE_OFF_.."), behavior="isolated")
 
         # in the txt file, new records begin with a newline
         end_line_splitter = pre_tokenizers.Split("\n", behavior="removed")
