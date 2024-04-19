@@ -21,7 +21,7 @@ class BpeMidiTokenizerFactory(TokenizerFactory):
 
     @staticmethod
     def select_parameters() -> dict:
-        trained_tokenizers_options = glob("dumps/*.json")
+        trained_tokenizers_options = glob("dumps/tokenizers/*.json")
         path = st.selectbox(label="pre-trained tokenizers", options=trained_tokenizers_options)
         with open(path) as file:
             serialized_tokenizer = json.load(file)

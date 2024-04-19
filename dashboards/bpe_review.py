@@ -166,7 +166,7 @@ def main():
         formatted_datetime = current_datetime.strftime("%Y-%m-%d_%H-%M-%S")
 
         # Create the filename
-        path = f"dumps/tokenizer-{formatted_datetime}.json"
+        path = f"dumps/tokenizers/tokenizer-{formatted_datetime}.json"
 
         tokenizer.save_tokenizer(path=path)
 
