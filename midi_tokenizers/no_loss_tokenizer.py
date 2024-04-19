@@ -109,7 +109,7 @@ class NoLossTokenizer(MidiTokenizer):
         Convert MIDI note dataframe into a dict with on/off events.
         """
         note_on_df: pd.DataFrame = notes.loc[:, ["start", "pitch", "velocity_bin"]]
-        note_off_df: pd.DataFrame = notes.loc[:, ["end", "pitch"]]
+        note_off_df: pd.DataFrame = notes.loc[:, ["end", "pitch", "velocity_bin"]]
 
         note_off_df["time"] = note_off_df["end"]
         note_off_df["event"] = "NOTE_OFF"
@@ -163,10 +163,10 @@ class NoLossTokenizer(MidiTokenizer):
             event_type = current_event["event"]
 
             # Append note event tokens
+            velocity = int(current_event["velocity_bin"])
+            tokens.append(self.velocity_bin_to_token[velocity])
             pitch = int(current_event["pitch"])
             if event_type == "NOTE_ON":
-                velocity = int(current_event["velocity_bin"])
-                tokens.append(self.velocity_bin_to_token[velocity])
                 tokens.append(self.pitch_to_on_token[pitch])
             else:
                 tokens.append(self.pitch_to_off_token[pitch])
