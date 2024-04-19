@@ -175,14 +175,46 @@ class NoLossTokenizer(MidiTokenizer):
 
         return tokens
 
+    def fix_token_sequences(self, tokens: list[str]):
+        """
+        If there are NOTE_OFF tokens before NOTE_ON in the list,
+        add NOTE_ON events at the beginning of the token list.
+        If there are NOTE_ON tokens that are left without NOTE_OFF, add them at the end as well.
+        """
+        pressed = np.zeros(shape=(110))
+        # There are velocity tokens before each event - we know with which velocity the key
+        # we are releasing was played
+        current_velocity_token = "VELOCITY_0"
+        for token in tokens:
+            if "VELOCITY" in token:
+                current_velocity_token = token
+
+            if "NOTE_ON" in token:
+                velocity = self.token_to_velocity_bin[current_velocity_token]
+                pressed[self.token_to_pitch[token]] = velocity
+
+            if "NOTE_OFF" in token:
+                pitch = self.token_to_pitch[token]
+                if pressed[pitch] == 0:
+                    tokens = [current_velocity_token, self.pitch_to_on_token[pitch]] + tokens
+                pressed[pitch] = 0
+            for key, state in enumerate(pressed):
+                if state > 0:
+                    note_off_token = self.pitch_to_off_token[key]
+                    velocity_token = self.velocity_bin_to_token[state]
+                    tokens = tokens + [velocity_token, note_off_token]
+
+        return tokens
+
     def untokenize(self, tokens: list[str]) -> pd.DataFrame:
+        tokens = self.fix_token_sequences(tokens=tokens)
         note_on_events = []
         note_off_events = []
 
         current_time = 0
         current_velocity = 0
         for token in tokens:
-            if re.search("^.T$", token) is not None:
+            if re.search(".T$", token) is not None:
                 dt: float = self.token_to_dt[token]
                 current_time += dt
             if "VELOCITY" in token:
