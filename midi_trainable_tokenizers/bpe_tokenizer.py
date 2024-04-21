@@ -26,7 +26,6 @@ class BpeMidiTokenizer(MidiTrainableTokenizer):
             # Initialize empty tokenizer and a trainer
             self.tokenizer = Tokenizer(model=models.BPE())
             self.tokenizer.pre_tokenizer = self.prepare_text_pre_tokenizer()
-            self.tokenizer.model = models.BPE()
             self.trainer = trainers.BpeTrainer(
                 vocab_size=self.max_vocab_size,
                 max_token_length=512,
@@ -50,11 +49,13 @@ class BpeMidiTokenizer(MidiTrainableTokenizer):
         # We have to use this - we cannot load saved tokenizer otherwise
         byte_level_tokenizer = pre_tokenizers.ByteLevel(add_prefix_space=False, use_regex=False)
 
-        # split the tokens into groups before training (concatenate only time tokens and velocity+note_on tokens)
+        # Split the tokens into groups before training (concatenate only time tokens and velocity+note_on tokens).
+        # We have to split the tokens somehow because treating the whole record as one word is very inefficient.
+        # This way of splitting makes most sense to me.
         note_on_splitter = pre_tokenizers.Split(Regex("VELOCITY_..? NOTE_ON_.."), behavior="isolated")
         note_off_splitter = pre_tokenizers.Split(Regex("VELOCITY_..? NOTE_OFF_.."), behavior="isolated")
 
-        # in the txt file, new records begin with a newline
+        # In the txt file, new records begin with a newline
         end_line_splitter = pre_tokenizers.Split("\n", behavior="removed")
 
         text_pre_tokenizers = [
