@@ -7,8 +7,8 @@ from datasets import Dataset
 from tokenizers import Regex, Tokenizer, models, trainers, pre_tokenizers
 
 from midi_tokenizers.midi_tokenizer import MidiTokenizer
-from object_generators.base_tokenizer_generator import BaseTokenizerGenerator
 from midi_trainable_tokenizers.trainable_tokenizer import MidiTrainableTokenizer
+from object_generators.base_tokenizer_generator import generate_tokenizer as generate_base_tokenizer
 
 
 class BpeMidiTokenizer(MidiTrainableTokenizer):
@@ -89,8 +89,8 @@ class BpeMidiTokenizer(MidiTrainableTokenizer):
         with open(path, "w+") as f:
             json.dump(tokenizer_desc, f)
 
-    @staticmethod
-    def from_file(path: str) -> "BpeMidiTokenizer":
+    @classmethod
+    def from_file(cls, path: str) -> "BpeMidiTokenizer":
         with open(path, "r") as f:
             tokenizer_desc = json.load(f)
 
@@ -98,8 +98,7 @@ class BpeMidiTokenizer(MidiTrainableTokenizer):
         parameters = tokenizer_desc["base_tokenizer_parameters"]
         bpe_tokenizer_json = tokenizer_desc["bpe_tokenizer"]
 
-        tokenizer_generator = BaseTokenizerGenerator()
-        base_tokenizer = tokenizer_generator.generate_tokenizer(name=base_tokenizer_name, parameters=parameters)
+        base_tokenizer = generate_base_tokenizer(name=base_tokenizer_name, parameters=parameters)
         tokenizer = Tokenizer.from_str(bpe_tokenizer_json)
         bpe_tokenizer = BpeMidiTokenizer(base_tokenizer=base_tokenizer, bpe_tokenizer=tokenizer)
 

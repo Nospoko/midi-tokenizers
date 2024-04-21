@@ -5,8 +5,8 @@ import streamlit as st
 from midi_tokenizers.midi_tokenizer import MidiTokenizer
 from midi_tokenizers.no_loss_tokenizer import NoLossTokenizer
 from midi_tokenizers.one_time_tokenizer import OneTimeTokenizer
-from object_generators.quantizer_generator import QuantizerGenerator
 from midi_tokenizers.quantized_midi_tokenizer import QuantizedMidiTokenizer
+from object_generators.quantizer_generator import name_to_quantizer_factory_map
 
 
 class TokenizerFactory:
@@ -35,9 +35,8 @@ class QuantizedMidiTokenizerFactory(TokenizerFactory):
 
     @staticmethod
     def select_parameters() -> dict:
-        quantizer_generator = QuantizerGenerator()
-        quantizer_name = st.selectbox(label="quantizer", options=quantizer_generator.name_to_factory_map.keys())
-        factory = quantizer_generator.name_to_factory_map[quantizer_name]
+        quantizer_name = st.selectbox(label="quantizer", options=name_to_quantizer_factory_map.keys())
+        factory = name_to_quantizer_factory_map[quantizer_name]
         quantization_cfg = factory.select_parameters()
 
         return {"quantization_cfg": quantization_cfg, "quantizer_name": quantizer_name}
@@ -83,23 +82,24 @@ class OneTimeTokenizerFactory(TokenizerFactory):
         return OneTimeTokenizer(**parameters)
 
 
-class BaseTokenizerGenerator:
-    # append new factories to this dict when new Tokenizers are defined.
-    name_to_factory_map: dict[str, "TokenizerFactory"] = {
-        "NoLossTokenizer": NoLossTokenizerFactory(),
-        "OneTimeTokenizer": OneTimeTokenizerFactory(),
-        "QuantizedMidiTokenizer": QuantizedMidiTokenizerFactory(),
-    }
+# append new factories to this dict when new Tokenizers are defined.
+name_to_base_factory_map: dict[str, "TokenizerFactory"] = {
+    "NoLossTokenizer": NoLossTokenizerFactory(),
+    "OneTimeTokenizer": OneTimeTokenizerFactory(),
+    "QuantizedMidiTokenizer": QuantizedMidiTokenizerFactory(),
+}
 
-    def tokenizer_info(self, name: str):
-        return self.name_to_factory_map[name].tokenizer_desc
 
-    def generate_tokenizer_with_streamlit(self, name: str) -> MidiTokenizer:
-        factory = self.name_to_factory_map[name]
-        parameters = factory.select_parameters()
+def tokenizer_info(name: str):
+    return name_to_base_factory_map[name].tokenizer_desc
 
-        return factory.create_tokenizer(parameters)
 
-    def generate_tokenizer(self, name: str, parameters: dict) -> MidiTokenizer:
-        factory = self.name_to_factory_map[name]
-        return factory.create_tokenizer(parameters)
+def generate_tokenizer_with_streamlit(name: str) -> MidiTokenizer:
+    factory = name_to_base_factory_map[name]
+    parameters = factory.select_parameters()
+    return factory.create_tokenizer(parameters)
+
+
+def generate_tokenizer(name: str, parameters: dict) -> MidiTokenizer:
+    factory = name_to_base_factory_map[name]
+    return factory.create_tokenizer(parameters)

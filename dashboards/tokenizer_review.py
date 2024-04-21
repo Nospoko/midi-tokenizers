@@ -4,7 +4,7 @@ import streamlit_pianoroll
 from fortepyan import MidiPiece
 from datasets import Dataset, load_dataset
 
-from object_generators.tokenizer_generator import TokenizerGenerator
+from object_generators.tokenizer_generator import tokenizer_info, name_to_factory_map, generate_tokenizer_with_streamlit
 
 
 @st.cache_data
@@ -50,14 +50,12 @@ def select_record(midi_dataset: Dataset):
 
 
 def main():
-    tokenizer_generator = TokenizerGenerator()
-
-    tokenizer_names = tokenizer_generator.name_to_factory_map.keys()
+    tokenizer_names = name_to_factory_map.keys()
     tokenizer_name = st.selectbox(label="tokenizer", options=tokenizer_names)
 
-    st.write(tokenizer_generator.tokenizer_info(name=tokenizer_name))
+    st.write(tokenizer_info(name=tokenizer_name))
     with st.form("tokenizer generation"):
-        tokenizer = tokenizer_generator.generate_tokenizer_with_streamlit(tokenizer_name)
+        tokenizer = generate_tokenizer_with_streamlit(tokenizer_name)
         st.form_submit_button("Run")
     st.write(f"vocab size: {tokenizer.vocab_size}")
 

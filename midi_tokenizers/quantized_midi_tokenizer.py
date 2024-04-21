@@ -3,16 +3,15 @@ import itertools
 import pandas as pd
 
 from midi_tokenizers.midi_tokenizer import MidiTokenizer
-from object_generators.quantizer_generator import QuantizerGenerator
+from object_generators.quantizer_generator import generate_quantizer
 
 
 class QuantizedMidiTokenizer(MidiTokenizer):
     def __init__(self, quantization_cfg: dict, quantizer_name: str):
         super().__init__()
-        quantizer_generator = QuantizerGenerator()
         self.quantizer_name = quantizer_name
 
-        self.quantizer = quantizer_generator.generate_quantizer(
+        self.quantizer = generate_quantizer(
             quantizer_name,
             quantization_cfg=quantization_cfg,
         )

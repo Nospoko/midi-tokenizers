@@ -118,7 +118,7 @@ class NoLossTokenizer(MidiTokenizer):
 
         note_on_events = note_on_df.to_dict(orient="records")
         note_off_events = note_off_df.to_dict(orient="records")
-        note_events = note_on_events + note_off_events
+        note_events = note_off_events + note_on_events
 
         note_events = sorted(note_events, key=lambda event: event["time"])
         return note_events
@@ -181,7 +181,7 @@ class NoLossTokenizer(MidiTokenizer):
         add NOTE_ON events at the beginning of the token list.
         If there are NOTE_ON tokens that are left without NOTE_OFF, add them at the end as well.
         """
-        pressed = np.zeros(shape=(110))
+        pressed = np.full(shape=(110), fill_value=-1)
         # There are velocity tokens before each event - we know with which velocity the key
         # we are releasing was played
         current_velocity_token = "VELOCITY_0"
@@ -190,19 +190,20 @@ class NoLossTokenizer(MidiTokenizer):
                 current_velocity_token = token
 
             if "NOTE_ON" in token:
-                velocity = self.token_to_velocity_bin[current_velocity_token]
-                pressed[self.token_to_pitch[token]] = velocity
+                velocity_bin = self.token_to_velocity_bin[current_velocity_token]
+                pressed[self.token_to_pitch[token]] = velocity_bin
 
             if "NOTE_OFF" in token:
                 pitch = self.token_to_pitch[token]
-                if pressed[pitch] == 0:
+                if pressed[pitch] == -1:
                     tokens = [current_velocity_token, self.pitch_to_on_token[pitch]] + tokens
-                pressed[pitch] = 0
-            for key, state in enumerate(pressed):
-                if state > 0:
-                    note_off_token = self.pitch_to_off_token[key]
-                    velocity_token = self.velocity_bin_to_token[state]
-                    tokens = tokens + [velocity_token, note_off_token]
+                pressed[pitch] = -1
+
+        for key, state in enumerate(pressed):
+            if state >= 0:
+                note_off_token = self.pitch_to_off_token[key]
+                velocity_token = self.velocity_bin_to_token[state]
+                tokens = tokens + [velocity_token, note_off_token]
 
         return tokens
 

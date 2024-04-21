@@ -5,7 +5,7 @@ import streamlit as st
 
 from midi_tokenizers.midi_tokenizer import MidiTokenizer
 from midi_trainable_tokenizers.bpe_tokenizer import BpeMidiTokenizer
-from object_generators.base_tokenizer_generator import TokenizerFactory, BaseTokenizerGenerator
+from object_generators.base_tokenizer_generator import TokenizerFactory, name_to_base_factory_map
 
 
 class BpeMidiTokenizerFactory(TokenizerFactory):
@@ -34,19 +34,20 @@ class BpeMidiTokenizerFactory(TokenizerFactory):
         return BpeMidiTokenizer.from_file(**parameters)
 
 
-class TokenizerGenerator(BaseTokenizerGenerator):
-    # append new factories to this dict when new Tokenizers are defined.
-    name_to_factory_map = BaseTokenizerGenerator.name_to_factory_map | {"BpeMidiTokenizer": BpeMidiTokenizerFactory()}
+name_to_factory_map = name_to_base_factory_map | {"BpeMidiTokenizer": BpeMidiTokenizerFactory()}
 
-    def tokenizer_info(self, name: str):
-        return self.name_to_factory_map[name].tokenizer_desc
 
-    def generate_tokenizer_with_streamlit(self, name: str) -> MidiTokenizer:
-        factory = self.name_to_factory_map[name]
-        parameters = factory.select_parameters()
+def tokenizer_info(name: str):
+    return name_to_factory_map[name].tokenizer_desc
 
-        return factory.create_tokenizer(parameters)
 
-    def generate_tokenizer(self, name: str, parameters: dict) -> MidiTokenizer:
-        factory = self.name_to_factory_map[name]
-        return factory.create_tokenizer(parameters)
+def generate_tokenizer_with_streamlit(name: str) -> MidiTokenizer:
+    factory = name_to_factory_map[name]
+    parameters = factory.select_parameters()
+
+    return factory.create_tokenizer(parameters)
+
+
+def generate_tokenizer(self, name: str, parameters: dict) -> MidiTokenizer:
+    factory = name_to_factory_map[name]
+    return factory.create_tokenizer(parameters)

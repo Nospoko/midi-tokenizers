@@ -10,7 +10,12 @@ from datasets import Dataset, load_dataset
 from tokenizers.pre_tokenizers import PreTokenizer
 
 from midi_trainable_tokenizers.bpe_tokenizer import BpeMidiTokenizer
-from object_generators.base_tokenizer_generator import BaseTokenizerGenerator
+from object_generators.base_tokenizer_generator import (
+    tokenizer_info,
+    generate_tokenizer,
+    name_to_base_factory_map,
+    generate_tokenizer_with_streamlit,
+)
 
 
 @st.cache_data
@@ -50,8 +55,7 @@ def select_record(midi_dataset: Dataset):
 
 @st.cache_data
 def tokenize_data(tokenizer_name, parameters: dict, dataset_path: str):
-    base_tokenizer_generator = BaseTokenizerGenerator()
-    base_tokenizer = base_tokenizer_generator.generate_tokenizer(tokenizer_name, parameters)
+    base_tokenizer = generate_tokenizer(tokenizer_name, parameters)
 
     train_dataset = load_dataset(dataset_path, split="train")
 
@@ -77,14 +81,13 @@ def main():
         A TrainableTokenzier (such as BpeTokenizer) will train on text data to compose a suitable vocabulary.
         """
     )
-    tokenizer_generator = BaseTokenizerGenerator()
 
-    base_tokenizer_names = tokenizer_generator.name_to_factory_map.keys()
+    base_tokenizer_names = name_to_base_factory_map.keys()
     base_tokenizer_name = st.selectbox(label="tokenizer", options=base_tokenizer_names)
 
-    st.write(tokenizer_generator.tokenizer_info(name=base_tokenizer_name))
+    st.write(tokenizer_info(name=base_tokenizer_name))
     with st.form("base tokenizer generation"):
-        base_tokenizer = tokenizer_generator.generate_tokenizer_with_streamlit(base_tokenizer_name)
+        base_tokenizer = generate_tokenizer_with_streamlit(base_tokenizer_name)
         st.form_submit_button("Run")
     st.write(f"base tokenizer vocab size: {base_tokenizer.vocab_size}")
 

@@ -4,7 +4,11 @@ import streamlit_pianoroll
 from fortepyan import MidiPiece
 from datasets import Dataset, load_dataset
 
-from object_generators.quantizer_generator import QuantizerGenerator
+from object_generators.quantizer_generator import (
+    quantization_info,
+    name_to_quantizer_factory_map,
+    generate_quantizer_with_streamlit,
+)
 
 
 @st.cache_data
@@ -50,14 +54,12 @@ def select_record(midi_dataset: Dataset):
 
 
 def main():
-    quantizer_generator = QuantizerGenerator()
-
-    quantizer_names = quantizer_generator.name_to_factory_map.keys()
+    quantizer_names = name_to_quantizer_factory_map.keys()
     quantizer_name = st.selectbox(label="quantizer", options=quantizer_names)
 
-    st.write(quantizer_generator.quantization_info(name=quantizer_name))
+    st.write(quantization_info(name=quantizer_name))
     with st.form("quantizer generation"):
-        quantizer = quantizer_generator.generate_quantizer_with_streamlit(quantizer_name)
+        quantizer = generate_quantizer_with_streamlit(quantizer_name)
         st.form_submit_button("Run")
 
     midi_dataset = select_dataset()

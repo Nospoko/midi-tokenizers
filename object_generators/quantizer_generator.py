@@ -89,22 +89,23 @@ class RelativeTimeQuantizerFactory(QuantizerFactory):
         return RelativeTimeQuantizer(**quantization_cfg)
 
 
-class QuantizerGenerator:
-    # append new factories to this dict when new Quantizers are defined.
-    name_to_factory_map: dict[str, "QuantizerFactory"] = {
-        "AbsoluteTimeQuantizer": AbsoluteTimeQuantizerFactory(),
-        "RelativeTimeQuantizer": RelativeTimeQuantizerFactory(),
-    }
+# append new factories to this dict when new Quantizers are defined.
+name_to_quantizer_factory_map: dict[str, "QuantizerFactory"] = {
+    "AbsoluteTimeQuantizer": AbsoluteTimeQuantizerFactory(),
+    "RelativeTimeQuantizer": RelativeTimeQuantizerFactory(),
+}
 
-    def quantization_info(self, name: str):
-        return self.name_to_factory_map[name].quantizer_desc
 
-    def generate_quantizer_with_streamlit(self, name: str) -> MidiQuantizer:
-        factory = self.name_to_factory_map[name]
-        quantization_cfg = factory.select_parameters()
+def quantization_info(name: str):
+    return name_to_quantizer_factory_map[name].quantizer_desc
 
-        return factory.create_quantizer(quantization_cfg)
 
-    def generate_quantizer(self, name: str, quantization_cfg: dict) -> MidiQuantizer:
-        factory = self.name_to_factory_map[name]
-        return factory.create_quantizer(quantization_cfg)
+def generate_quantizer_with_streamlit(name: str) -> MidiQuantizer:
+    factory = name_to_quantizer_factory_map[name]
+    quantization_cfg = factory.select_parameters()
+    return factory.create_quantizer(quantization_cfg)
+
+
+def generate_quantizer(name: str, quantization_cfg: dict) -> MidiQuantizer:
+    factory = name_to_quantizer_factory_map[name]
+    return factory.create_quantizer(quantization_cfg)
