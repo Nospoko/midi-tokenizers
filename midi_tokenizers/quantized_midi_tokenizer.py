@@ -3,7 +3,7 @@ import itertools
 import pandas as pd
 
 from midi_tokenizers.midi_tokenizer import MidiTokenizer
-from object_generators.quantizer_generator import generate_quantizer
+from midi_tokenizers_generation.quantizer_generator import generate_quantizer
 
 
 class QuantizedMidiTokenizer(MidiTokenizer):

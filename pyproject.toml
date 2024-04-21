@@ -28,9 +28,9 @@ Homepage = "https://github.com/Nospoko/midi-quantizers"
 
 [tool.setuptools]
 packages = [
-"quantizers",
-"object_generators",
+"midi_quantizers",
+"midi_tokenizers_generation",
 "midi_tokenizers",
 "midi_trainable_tokenizers",
-"artifacts",
+"midi_quantization_artifacts",
 ]

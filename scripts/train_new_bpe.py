@@ -3,6 +3,8 @@ from datasets import load_dataset
 from midi_tokenizers.one_time_tokenizer import OneTimeTokenizer
 from midi_trainable_tokenizers.bpe_tokenizer import BpeMidiTokenizer
 
+# This is a script for training a BpeMidiTokenizer
+
 
 def main():
     eps = 0.01

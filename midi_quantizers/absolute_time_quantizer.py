@@ -2,7 +2,7 @@ import yaml
 import numpy as np
 import pandas as pd
 
-from quantizers.quantizer import MidiQuantizer
+from midi_quantizers.quantizer import MidiQuantizer
 
 
 class AbsoluteTimeQuantizer(MidiQuantizer):
@@ -35,7 +35,7 @@ class AbsoluteTimeQuantizer(MidiQuantizer):
 
     def _load_bin_edges(self):
         # Hydra changes paths, this finds it back
-        artifacts_path = "artifacts/bin_edges.yaml"
+        artifacts_path = "midi_quantization_artifacts/bin_edges.yaml"
         with open(artifacts_path, "r") as f:
             bin_edges = yaml.safe_load(f)
 

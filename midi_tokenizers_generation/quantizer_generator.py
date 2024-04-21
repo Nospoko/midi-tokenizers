@@ -2,9 +2,9 @@ from abc import abstractmethod
 
 import streamlit as st
 
-from quantizers.quantizer import MidiQuantizer
-from quantizers.absolute_time_quantizer import AbsoluteTimeQuantizer
-from quantizers.relative_time_quantizer import RelativeTimeQuantizer
+from midi_quantizers.quantizer import MidiQuantizer
+from midi_quantizers.absolute_time_quantizer import AbsoluteTimeQuantizer
+from midi_quantizers.relative_time_quantizer import RelativeTimeQuantizer
 
 
 class QuantizerFactory:
@@ -25,15 +25,15 @@ class QuantizerFactory:
 
 class AbsoluteTimeQuantizerFactory(QuantizerFactory):
     quantizer_desc = """
-    artifacts/bin_edges.yaml stores bin edges calculated using quantiles -
+    midi_quantization_artifacts/bin_edges.yaml stores bin edges calculated using quantiles -
     notes in maestro dataset are evenly distributed into each bin.
 
     - `pitch`: uses all 88 pitch values
-    - `velocity`: quantization using bins from artifacts/bin_edges.yaml
+    - `velocity`: quantization using bins from midi_quantization_artifacts/bin_edges.yaml
     - timing:
         - `start`: quantizes start into `n_start_bins` bins, evenly distributed across `sequence_duration`.
         If the piece is longer that `sequence_duration`, all late notes will land in the last bin.
-        - `duration`: quantization using bins from artifacts/bin_edges.yaml
+        - `duration`: quantization using bins from midi_quantization_artifacts/bin_edges.yaml
     """
 
     @staticmethod
@@ -60,15 +60,15 @@ class AbsoluteTimeQuantizerFactory(QuantizerFactory):
 
 class RelativeTimeQuantizerFactory(QuantizerFactory):
     quantizer_desc = """
-    artifacts/bin_edges.yaml stores bin edges calculated using quantiles -
+    midi_quantization_artifacts/bin_edges.yaml stores bin edges calculated using quantiles -
     notes in maestro dataset are evenly distributed into each bin.
 
     - `pitch`: uses all 88 pitch values
-    - `velocity`: quantization using bins from artifacts/bin_edges.yaml
+    - `velocity`: quantization using bins from midi_quantization_artifacts/bin_edges.yaml
     - timing:
         - `dstart`: Calculates time between consecutive notes played.
-        Quantizes this time into bins specified in artifacts/bin_edges.yaml
-        - `duration`: quantization using bins from artifacts/bin_edges.yaml
+        Quantizes this time into bins specified in midi_quantization_artifacts/bin_edges.yaml
+        - `duration`: quantization using bins from midi_quantization_artifacts/bin_edges.yaml
     """
 
     @staticmethod

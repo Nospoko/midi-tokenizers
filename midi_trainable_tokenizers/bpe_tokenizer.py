@@ -8,7 +8,7 @@ from tokenizers import Regex, Tokenizer, models, trainers, pre_tokenizers
 
 from midi_tokenizers.midi_tokenizer import MidiTokenizer
 from midi_trainable_tokenizers.trainable_tokenizer import MidiTrainableTokenizer
-from object_generators.base_tokenizer_generator import generate_tokenizer as generate_base_tokenizer
+from midi_tokenizers_generation.base_tokenizer_generator import generate_tokenizer as generate_base_tokenizer
 
 
 class BpeMidiTokenizer(MidiTrainableTokenizer):
