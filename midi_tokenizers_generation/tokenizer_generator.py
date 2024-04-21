@@ -48,6 +48,6 @@ def generate_tokenizer_with_streamlit(name: str) -> MidiTokenizer:
     return factory.create_tokenizer(parameters)
 
 
-def generate_tokenizer(self, name: str, parameters: dict) -> MidiTokenizer:
+def generate_tokenizer(name: str, parameters: dict) -> MidiTokenizer:
     factory = name_to_factory_map[name]
     return factory.create_tokenizer(parameters)

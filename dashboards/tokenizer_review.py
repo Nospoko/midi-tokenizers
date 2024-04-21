@@ -4,11 +4,7 @@ import streamlit_pianoroll
 from fortepyan import MidiPiece
 from datasets import Dataset, load_dataset
 
-from midi_tokenizers_generation.tokenizer_generator import (
-    tokenizer_info, 
-    name_to_factory_map, 
-    generate_tokenizer_with_streamlit,
-)
+from midi_tokenizers_generation.tokenizer_generator import tokenizer_info, name_to_factory_map, generate_tokenizer_with_streamlit
 
 
 @st.cache_data
