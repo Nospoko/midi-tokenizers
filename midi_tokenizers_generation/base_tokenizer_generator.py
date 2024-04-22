@@ -55,9 +55,9 @@ class NoLossTokenizerFactory(TokenizerFactory):
 
     @staticmethod
     def select_parameters() -> dict:
-        eps = st.number_input(label="eps - minimal time shift value", value=0.01, format="%0.3f")
+        min_time_unit = st.number_input(label="eps - minimal time shift value", value=0.01, format="%0.3f")
         n_velocity_bins = st.number_input(label="n_velocity_bins", value=32)
-        return {"eps": eps, "n_velocity_bins": n_velocity_bins}
+        return {"min_time_unit": min_time_unit, "n_velocity_bins": n_velocity_bins}
 
     @staticmethod
     def create_tokenizer(parameters: dict) -> NoLossTokenizer:
@@ -73,9 +73,9 @@ class OneTimeTokenizerFactory(TokenizerFactory):
 
     @staticmethod
     def select_parameters() -> dict:
-        eps = st.number_input(label="eps - time shift value", value=0.01, format="%0.3f")
+        min_time_unit = st.number_input(label="eps - time shift value", value=0.01, format="%0.3f")
         n_velocity_bins = st.number_input(label="n_velocity_bins", value=32)
-        return {"eps": eps, "n_velocity_bins": n_velocity_bins}
+        return {"min_time_unit": min_time_unit, "n_velocity_bins": n_velocity_bins}
 
     @staticmethod
     def create_tokenizer(parameters: dict) -> NoLossTokenizer:

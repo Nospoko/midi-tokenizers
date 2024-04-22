@@ -9,11 +9,11 @@ from midi_tokenizers.midi_tokenizer import MidiTokenizer
 class NoLossTokenizer(MidiTokenizer):
     def __init__(
         self,
-        eps: float = 0.001,
+        min_time_unit: float = 0.001,
         n_velocity_bins: int = 128,
     ):
         super().__init__()
-        self.eps = eps
+        self.min_time_unit = min_time_unit
         self.n_velocity_bins = n_velocity_bins
         self.specials = ["<CLS>"]
         self._build_vocab()
@@ -26,12 +26,12 @@ class NoLossTokenizer(MidiTokenizer):
 
     def __rich_repr__(self):
         yield "NoLossTokenizer"
-        yield "eps", self.eps
+        yield "min_time_unit", self.min_time_unit
         yield "vocab_size", self.vocab_size
 
     @property
     def parameters(self):
-        return {"eps": self.eps, "n_velocity_bins": self.n_velocity_bins}
+        return {"min_time_unit": self.min_time_unit, "n_velocity_bins": self.n_velocity_bins}
 
     @property
     def vocab_size(self) -> int:
@@ -81,7 +81,7 @@ class NoLossTokenizer(MidiTokenizer):
         dt_to_token = {}
 
         dt_it = 1
-        dt = self.eps
+        dt = self.min_time_unit
         # Generate time tokens with exponential distribution
         while dt < 1:
             time_token = f"{dt_it}T"
@@ -131,10 +131,10 @@ class NoLossTokenizer(MidiTokenizer):
         filling_dt = 0
         current_step = self.max_time_value
         while True:
-            if abs(dt - filling_dt) < self.eps:
+            if abs(dt - filling_dt) < self.min_time_unit:
                 # Exit the loop when the gap is filled
                 break
-            if filling_dt + current_step - dt > self.eps:
+            if filling_dt + current_step - dt > self.min_time_unit:
                 # Select time step that will fit into the gap
                 current_step /= 2
             else:
