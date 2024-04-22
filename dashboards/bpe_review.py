@@ -112,9 +112,9 @@ def main():
         st.write(text_dataset[0][:250] + " [...]")
 
     # initialize empty Tokenizer ...
-    tokenizer = BpeMidiTokenizer(base_tokenizer=base_tokenizer)
+    trainable_midi_tokenizer = BpeMidiTokenizer(base_tokenizer=base_tokenizer)
     # and get its pre-tokenizer
-    pre_tokenizer: PreTokenizer = tokenizer.tokenizer.pre_tokenizer
+    pre_tokenizer: PreTokenizer = trainable_midi_tokenizer.text_tokenizer.pre_tokenizer
     pre_tokenized_data = pre_tokenizer.pre_tokenize_str(text_dataset[0])
     pre_tokenized_data = [token_info[0] for token_info in pre_tokenized_data]
 
@@ -156,10 +156,10 @@ def main():
         """
     )
     max_vocab_size = st.number_input(label="max_vocab_size", value=500)
-    tokenizer = BpeMidiTokenizer(base_tokenizer=base_tokenizer, max_vocab_size=max_vocab_size)
+    trainable_midi_tokenizer = BpeMidiTokenizer(base_tokenizer=base_tokenizer, max_vocab_size=max_vocab_size)
 
     # training the BPE tokenizer
-    tokenizer.train_from_text_dataset(dataset=text_dataset)
+    trainable_midi_tokenizer.train_from_text_dataset(dataset=text_dataset)
     midi_dataset = load_hf_dataset(dataset_name=dataset_name, split="test")
 
     def save_tokenizer():
@@ -171,7 +171,7 @@ def main():
         # Create the filename
         path = f"dumps/tokenizers/tokenizer-{formatted_datetime}.json"
 
-        tokenizer.save_tokenizer(path=path)
+        trainable_midi_tokenizer.save_tokenizer(path=path)
 
     st.write(
         """
@@ -181,7 +181,7 @@ def main():
         """
     )
     st.button(label="save tokenizer", on_click=save_tokenizer)
-    st.write(f"BpeMidiTokenizer vocab size: {tokenizer.vocab_size}")
+    st.write(f"BpeMidiTokenizer vocab size: {trainable_midi_tokenizer.vocab_size}")
     st.write("### Test the tokenizer")
     record = select_record(midi_dataset=midi_dataset)
     piece = MidiPiece.from_huggingface(record=record)
@@ -192,8 +192,8 @@ def main():
     finish = fragment_selection_columns[1].number_input(f"finish [0-{end}]", value=60.0)
     piece = piece.trim(start, finish)
 
-    tokens = tokenizer.tokenize(piece.df)
-    untokenized_notes = tokenizer.untokenize(tokens=tokens)
+    tokens = trainable_midi_tokenizer.tokenize(piece.df)
+    untokenized_notes = trainable_midi_tokenizer.untokenize(tokens=tokens)
 
     untokenized_piece = MidiPiece(df=untokenized_notes, source=piece.source | {"tokenized": True})
 

@@ -15,24 +15,24 @@ class BpeMidiTokenizer(MidiTrainableTokenizer):
     def __init__(self, base_tokenizer: MidiTokenizer, bpe_tokenizer: Tokenizer = None, max_vocab_size: int = None):
         super().__init__()
         self.base_tokenizer = base_tokenizer
-        self.tokenizer = bpe_tokenizer
-        self.name = "BpeTokenizer"
+        self.text_tokenizer = bpe_tokenizer
+        self.name = "BpeMidiTokenizer"
         self.max_vocab_size = max_vocab_size
 
         if self.max_vocab_size is None:
             self.max_vocab_size = 30000  # default BpeTrainer vocab_size
 
-        if self.tokenizer is None:
+        if self.text_tokenizer is None:
             # Initialize empty tokenizer and a trainer
-            self.tokenizer = Tokenizer(model=models.BPE())
-            self.tokenizer.pre_tokenizer = self.prepare_text_pre_tokenizer()
+            self.text_tokenizer = Tokenizer(model=models.BPE())
+            self.text_tokenizer.pre_tokenizer = self.prepare_text_pre_tokenizer()
             self.trainer = trainers.BpeTrainer(
                 vocab_size=self.max_vocab_size,
                 max_token_length=512,
                 special_tokens=["<CLS>"],
             )
 
-        self.vocab = self.tokenizer.get_vocab()
+        self.vocab = self.text_tokenizer.get_vocab()
 
     def prepare_data_for_training(self, file_name: str, train_dataset: Dataset):
         def process_record(record):
@@ -70,7 +70,7 @@ class BpeMidiTokenizer(MidiTrainableTokenizer):
         tokens = self.base_tokenizer.tokenize(notes)
         concatenated_tokens = " ".join(tokens)
 
-        encoding: tokenizers.Encoding = self.tokenizer.encode(concatenated_tokens)
+        encoding: tokenizers.Encoding = self.text_tokenizer.encode(concatenated_tokens)
         return encoding.tokens
 
     def untokenize(self, tokens: list[str]) -> pd.DataFrame:
@@ -85,7 +85,7 @@ class BpeMidiTokenizer(MidiTrainableTokenizer):
         tokenizer_desc = {
             "base_tokenizer": self.base_tokenizer.name,
             "base_tokenizer_parameters": self.base_tokenizer.parameters,
-            "bpe_tokenizer": self.tokenizer.to_str(),
+            "bpe_tokenizer": self.text_tokenizer.to_str(),
         }
         with open(path, "w+") as f:
             json.dump(tokenizer_desc, f)
