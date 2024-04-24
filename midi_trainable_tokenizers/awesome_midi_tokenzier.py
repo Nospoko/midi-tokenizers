@@ -82,7 +82,7 @@ class AwesomeMidiTokenizer(MidiTrainableTokenizer):
             # Join chunks with whitespace
             return " ".join(chunked_tokens) + "\n"
 
-        with open(file=file_name, mode="w+") as file, ThreadPoolExecutor() as executor:
+        with open(file=file_name, mode="w+", encoding="utf-8") as file, ThreadPoolExecutor() as executor:
             # Process records concurrently
             for result in executor.map(process_record, train_dataset):
                 file.write(result)

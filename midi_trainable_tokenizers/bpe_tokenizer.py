@@ -40,7 +40,7 @@ class BpeMidiTokenizer(MidiTrainableTokenizer):
             tokens = self.base_tokenizer.tokenize(notes=notes)
             return " ".join(str(token) for token in tokens) + "\n"
 
-        with open(file=file_name, mode="w+") as file, ThreadPoolExecutor() as executor:
+        with open(file=file_name, mode="w+", encoding="utf-8") as file, ThreadPoolExecutor() as executor:
             # Process records concurrently
             for result in executor.map(process_record, train_dataset):
                 file.write(result)
