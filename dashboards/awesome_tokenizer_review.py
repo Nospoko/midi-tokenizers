@@ -9,7 +9,7 @@ from fortepyan import MidiPiece
 from datasets import Dataset, load_dataset
 from tokenizers.pre_tokenizers import PreTokenizer
 
-from midi_trainable_tokenizers.awsome_midi_tokenzier import AwesomeMidiTokenizer
+from midi_trainable_tokenizers.awesome_midi_tokenzier import AwesomeMidiTokenizer
 from midi_tokenizers_generation.base_tokenizer_generator import (
     tokenizer_info,
     generate_tokenizer,

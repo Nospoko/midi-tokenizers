@@ -72,15 +72,15 @@ class AwesomeMidiTokenizer(MidiTrainableTokenizer):
             awesome_tokens = self.base_ids_to_awesome_tokens(tokens)
 
             # Split tokens into chunks of less than max_token_length characters
-            # Create chunks of self.max_token_length characters with a rolling window of step self.max_token_length//2
+            # Create chunks of self.max_token_length characters
             chunked_tokens = []
             chunk = ""
             for i in range(0, len(tokens), self.max_token_length):
                 chunk = "".join(str(token) for token in awesome_tokens[i : i + self.max_token_length])
                 chunked_tokens.append(chunk)
 
-            # Join chunks with "\n"
-            return "\n".join(chunked_tokens) + "\n"
+            # Join chunks with whitespace
+            return " ".join(chunked_tokens) + "\n"
 
         with open(file=file_name, mode="w+") as file, ThreadPoolExecutor() as executor:
             # Process records concurrently
@@ -91,7 +91,7 @@ class AwesomeMidiTokenizer(MidiTrainableTokenizer):
         # We have to use this - we cannot load saved tokenizer otherwise
         whitespace_tokenzier = pre_tokenizers.WhitespaceSplit()
 
-        # In the txt file, new words begin with a newline
+        # In the txt file, new records begin with a newline
         end_line_splitter = pre_tokenizers.Split("\n", behavior="removed")
 
         text_pre_tokenizers = [
