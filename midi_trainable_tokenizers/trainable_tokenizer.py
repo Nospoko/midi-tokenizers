@@ -20,11 +20,16 @@ class MidiTrainableTokenizer(MidiTokenizer):
 
     def train(self, train_dataset: Dataset):
         file = "tmp_dump.txt"
-        self.prepare_data_for_training(file_name=file, train_dataset=train_dataset)
+        # create an empy file
+        open(file, 'w').close()
+        try:
+            self.prepare_data_for_training(file_name=file, train_dataset=train_dataset)
 
-        self.text_tokenizer.train([file], trainer=self.trainer)
-        self.vocab = self.text_tokenizer.get_vocab()
-        os.unlink(file)
+            self.text_tokenizer.train([file], trainer=self.trainer)
+            self.vocab = self.text_tokenizer.get_vocab()
+        finally:
+            # make sure to always clean up
+            os.unlink(file)
 
     def train_from_text_dataset(self, dataset: Iterable):
         self.text_tokenizer.train_from_iterator(dataset, trainer=self.trainer)

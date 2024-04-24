@@ -1,5 +1,5 @@
 import json
-from concurrent.futures import ThreadPoolExecutor
+from tqdm import tqdm
 
 import tokenizers
 import pandas as pd
@@ -75,16 +75,17 @@ class AwesomeMidiTokenizer(MidiTrainableTokenizer):
             # Create chunks of self.max_token_length characters
             chunked_tokens = []
             chunk = ""
-            for i in range(0, len(tokens), self.max_token_length):
+            for i in tqdm(range(0, len(tokens), self.max_token_length)):
                 chunk = "".join(str(token) for token in awesome_tokens[i : i + self.max_token_length])
                 chunked_tokens.append(chunk)
 
             # Join chunks with whitespace
             return " ".join(chunked_tokens) + "\n"
 
-        with open(file=file_name, mode="w+", encoding="utf-8") as file, ThreadPoolExecutor() as executor:
+        with open(file=file_name, mode="w+", encoding="utf-8") as file:
             # Process records concurrently
-            for result in executor.map(process_record, train_dataset):
+            for record in train_dataset:
+                result = process_record(record=record)
                 file.write(result)
 
     def prepare_text_pre_tokenizer(self):
