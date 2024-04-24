@@ -1,8 +1,8 @@
 import json
-from tqdm import tqdm
 
 import tokenizers
 import pandas as pd
+from tqdm import tqdm
 from datasets import Dataset
 from tokenizers import Tokenizer, models, trainers, pre_tokenizers
 

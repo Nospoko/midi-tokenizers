@@ -21,7 +21,7 @@ class MidiTrainableTokenizer(MidiTokenizer):
     def train(self, train_dataset: Dataset):
         file = "tmp_dump.txt"
         # create an empy file
-        open(file, 'w').close()
+        open(file, "w").close()
         try:
             self.prepare_data_for_training(file_name=file, train_dataset=train_dataset)
 
