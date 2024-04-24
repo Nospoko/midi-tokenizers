@@ -1,4 +1,4 @@
-import tempfile
+import os
 from typing import Iterable
 from abc import abstractmethod
 
@@ -19,11 +19,12 @@ class MidiTrainableTokenizer(MidiTokenizer):
         pass
 
     def train(self, train_dataset: Dataset):
-        file = tempfile.NamedTemporaryFile()
-        self.prepare_data_for_training(file_name=file.name, train_dataset=train_dataset)
+        file = "tmp_dump.txt"
+        self.prepare_data_for_training(file_name=file, train_dataset=train_dataset)
 
-        self.text_tokenizer.train([file.name], trainer=self.trainer)
+        self.text_tokenizer.train([file], trainer=self.trainer)
         self.vocab = self.text_tokenizer.get_vocab()
+        os.unlink(file)
 
     def train_from_text_dataset(self, dataset: Iterable):
         self.text_tokenizer.train_from_iterator(dataset, trainer=self.trainer)

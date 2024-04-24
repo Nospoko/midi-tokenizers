@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "midi_tokenizers"
-version = "0.0.3"
+version = "0.0.4"
 authors = [
   { name="Wojciech Matejuk", email="wmatejuk14@gmail.com" },
   { name = "algrtm", email = "office@algrtm.com" }
