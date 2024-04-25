@@ -2,7 +2,6 @@ import json
 
 import tokenizers
 import pandas as pd
-from tqdm import tqdm
 from datasets import Dataset
 from tokenizers import Tokenizer, models, trainers, pre_tokenizers
 
@@ -75,7 +74,7 @@ class AwesomeMidiTokenizer(MidiTrainableTokenizer):
             # Create chunks of self.max_token_length characters
             chunked_tokens = []
             chunk = ""
-            for i in tqdm(range(0, len(tokens), self.max_token_length)):
+            for i in range(0, len(tokens), self.max_token_length):
                 chunk = "".join(str(token) for token in awesome_tokens[i : i + self.max_token_length])
                 chunked_tokens.append(chunk)
 
@@ -83,7 +82,6 @@ class AwesomeMidiTokenizer(MidiTrainableTokenizer):
             return " ".join(chunked_tokens) + "\n"
 
         with open(file=file_name, mode="w+", encoding="utf-8") as file:
-            # Process records concurrently
             for record in train_dataset:
                 result = process_record(record=record)
                 file.write(result)
