@@ -46,6 +46,7 @@ class AwesomeMidiTokenizer(MidiTrainableTokenizer):
             )
 
         self.vocab = self.text_tokenizer.get_vocab()
+        self.token_to_id = {token: it for it, token in enumerate(self.vocab)}
 
     def awesome_tokens_to_base_ids(self, awesome_tokens: list[str]) -> list[int]:
         base_token_ids = []

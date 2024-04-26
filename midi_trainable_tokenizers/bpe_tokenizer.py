@@ -33,6 +33,7 @@ class BpeMidiTokenizer(MidiTrainableTokenizer):
             )
 
         self.vocab = self.text_tokenizer.get_vocab()
+        self.token_to_id = {token: it for it, token in enumerate(self.vocab)}
 
     def prepare_data_for_training(self, file_name: str, train_dataset: Dataset):
         def process_record(record):
