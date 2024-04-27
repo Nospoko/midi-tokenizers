@@ -228,6 +228,9 @@ class NoLossTokenizer(MidiTokenizer):
             # If the note was pressed several times, consider it pressed until pressed again
             starts_shifted = note_ons["start"].shift(-1)
             missing_indices = note_ons.index[note_ons["end"].isnull()]
+            # Append a nan at the very end - otherwise it will throw an error if the notes
+            # are played too quickly for selected `min_time_unit`.
+            starts_shifted.loc[missing_indices.max() + 1] = np.nan
             note_ons.loc[missing_indices, "end"] = starts_shifted[missing_indices + 1]
 
             note_groups.append(note_ons)
