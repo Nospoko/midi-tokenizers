@@ -175,40 +175,7 @@ class NoLossTokenizer(MidiTokenizer):
 
         return tokens
 
-    def fix_token_sequences(self, tokens: list[str]):
-        """
-        If there are NOTE_OFF tokens before NOTE_ON in the list,
-        add NOTE_ON events at the beginning of the token list.
-        If there are NOTE_ON tokens that are left without NOTE_OFF, add them at the end as well.
-        """
-        pressed = np.full(shape=(110), fill_value=-1)
-        # There are velocity tokens before each event - we know with which velocity the key
-        # we are releasing was played
-        current_velocity_token = "VELOCITY_0"
-        for token in tokens:
-            if "VELOCITY" in token:
-                current_velocity_token = token
-
-            if "NOTE_ON" in token:
-                velocity_bin = self.token_to_velocity_bin[current_velocity_token]
-                pressed[self.token_to_pitch[token]] = velocity_bin
-
-            if "NOTE_OFF" in token:
-                pitch = self.token_to_pitch[token]
-                if pressed[pitch] == -1:
-                    tokens = [current_velocity_token, self.pitch_to_on_token[pitch]] + tokens
-                pressed[pitch] = -1
-
-        for key, state in enumerate(pressed):
-            if state >= 0:
-                note_off_token = self.pitch_to_off_token[key]
-                velocity_token = self.velocity_bin_to_token[state]
-                tokens = tokens + [velocity_token, note_off_token]
-
-        return tokens
-
     def untokenize(self, tokens: list[str]) -> pd.DataFrame:
-        tokens = self.fix_token_sequences(tokens=tokens)
         note_on_events = []
         note_off_events = []
 
@@ -240,13 +207,33 @@ class NoLossTokenizer(MidiTokenizer):
         note_on_events = pd.DataFrame(note_on_events)
         note_off_events = pd.DataFrame(note_off_events)
 
-        # So if we sort them by pitch ...
-        note_on_events = note_on_events.sort_values(by="pitch", kind="stable").reset_index(drop=True)
-        note_off_events = note_off_events.sort_values(by="pitch", kind="stable").reset_index(drop=True)
+        # So if we group them by pitch ...
+        pitches = note_on_events["pitch"].unique()
+        note_groups = []
 
-        # we get pairs of note on and note off events for each key-press
-        notes = note_on_events
-        notes["end"] = note_off_events["end"]
+        for pitch in pitches:
+            note_offs = note_off_events[note_off_events["pitch"] == pitch].copy().reset_index(drop=True)
+            note_ons = note_on_events[note_on_events["pitch"] == pitch].copy().reset_index(drop=True)
+
+            # and ignore (drop) all unmatched NOTE_OFF events ...
+            for index, row in note_offs.iterrows():
+                if row["end"] > note_ons.iloc[0]["start"]:
+                    break
+                else:
+                    note_offs.drop(index, inplace=True)
+            note_offs = note_offs.reset_index(drop=True)
+            # we get pairs of note on and note off events for each key-press
+            note_ons["end"] = note_offs["end"]
+
+            # If the note was pressed several times, consider it pressed until pressed again
+            starts_shifted = note_ons["start"].shift(-1)
+            missing_indices = note_ons.index[note_ons["end"].isnull()]
+            note_ons.loc[missing_indices, "end"] = starts_shifted[missing_indices + 1]
+
+            note_groups.append(note_ons)
+        notes = pd.concat(note_groups, axis=0, ignore_index=True).reset_index(drop=True)
+
+        notes["end"] = notes["end"].fillna(notes["end"].max())
 
         notes = notes.sort_values(by="start")
         notes = notes.reset_index(drop=True)

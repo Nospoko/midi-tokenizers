@@ -20,9 +20,7 @@ class AwesomeMidiTokenizer(MidiTrainableTokenizer):
     ):
         # this is a tricky tokenizer : it uses base_tokenizer token ids as characters.
         # encryption_offset is used when converting token ids to characters:
-        # we do not want to use a NULL character nor "\n" (because it splits the words - i might change it later)
-        # nor " " - because we need to have WhitespaceSplit pre-tokenizer to serialize
-        # huggingface tokenizers correctly (no idea why)
+        # we do not want to use a NULL, '\n' nor " " character (because it splits the words)
         self.encryption_offset = 100
 
         super().__init__()

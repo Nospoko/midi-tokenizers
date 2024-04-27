@@ -73,7 +73,6 @@ def main():
 
     tokens = tokenizer.tokenize(piece.df)
     untokenized_notes = tokenizer.untokenize(tokens=tokens)
-
     untokenized_piece = MidiPiece(df=untokenized_notes, source=piece.source | {"tokenized": True})
 
     review_columns = st.columns(2)
