@@ -225,15 +225,10 @@ class NoLossTokenizer(MidiTokenizer):
             # we get pairs of note on and note off events for each key-press
             note_ons["end"] = note_offs["end"]
 
-            # If the note was pressed several times, consider it pressed until pressed again
-            starts_shifted = note_ons["start"].shift(-1)
-            missing_indices = note_ons.index[note_ons["end"].isnull()]
-            # Append a nan at the very end - otherwise it will throw an error if the notes
-            # are played too quickly for selected `min_time_unit`.
-            starts_shifted.loc[missing_indices.max() + 1] = np.nan
-            note_ons.loc[missing_indices, "end"] = starts_shifted[missing_indices + 1]
-
+            note_ons.loc[note_ons["end"] <= note_ons["start"]] = np.nan
+            note_ons = note_ons.dropna(axis=0)
             note_groups.append(note_ons)
+
         notes = pd.concat(note_groups, axis=0, ignore_index=True).reset_index(drop=True)
 
         notes["end"] = notes["end"].fillna(notes["end"].max())
