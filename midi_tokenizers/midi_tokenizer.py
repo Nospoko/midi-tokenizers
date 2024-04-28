@@ -10,7 +10,7 @@ class MidiTokenizer:
         self.name = "MidiTokenizer"
         self.special_tokens = special_tokens
         if self.special_tokens is None:
-            self.special_tokens = special_tokens
+            self.special_tokens = ["<CLS>"]
 
     @abstractmethod
     def tokenize(self, record: dict) -> list[str]:
