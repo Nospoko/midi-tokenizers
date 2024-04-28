@@ -32,8 +32,9 @@ class BpeMidiTokenizer(MidiTrainableTokenizer):
                 special_tokens=self.special_tokens,
             )
 
-        self.vocab = self.text_tokenizer.get_vocab()
-        self.token_to_id = {token: it for it, token in enumerate(self.vocab)}
+        # looks like HF vocab looks like our `token_to_id`
+        self.token_to_id = self.text_tokenizer.get_vocab()
+        self.vocab = {it: token for token, it in self.token_to_id.items()}
 
     def prepare_data_for_training(self, file_name: str, train_dataset: Dataset):
         def process_record(record):
