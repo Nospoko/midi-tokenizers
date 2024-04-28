@@ -45,9 +45,9 @@ class AwesomeMidiTokenizer(MidiTrainableTokenizer):
                 max_token_length=self.max_token_length,
                 special_tokens=self.special_tokens,
             )
-
-        self.vocab = self.text_tokenizer.get_vocab()
-        self.token_to_id = {token: it for it, token in enumerate(self.vocab)}
+        # looks like HF vocab looks like our `token_to_id`
+        self.token_to_id = self.text_tokenizer.get_vocab()
+        self.vocab = {it: token for token, it in self.token_to_id.items()}
 
     def awesome_tokens_to_base_ids(self, awesome_tokens: list[str]) -> list[int]:
         base_token_ids = []
