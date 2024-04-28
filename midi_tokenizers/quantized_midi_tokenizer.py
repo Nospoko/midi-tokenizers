@@ -18,9 +18,8 @@ class QuantizedMidiTokenizer(MidiTokenizer):
 
         self.quantization_cfg = quantization_cfg
         self.keys = self.quantizer.keys
-        self.specials = ["<CLS>"]
 
-        self.vocab = list(self.specials)
+        self.vocab = list(self.special_tokens)
 
         # add midi tokens to vocab
         self._build_vocab()
@@ -62,7 +61,7 @@ class QuantizedMidiTokenizer(MidiTokenizer):
     def untokenize(self, tokens: list[str]) -> pd.DataFrame:
         notes = []
         for token in tokens:
-            if token in self.specials:
+            if token in self.special_tokens:
                 continue
 
             values_txt = token.split("-")

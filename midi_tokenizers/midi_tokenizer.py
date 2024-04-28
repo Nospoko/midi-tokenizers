@@ -4,10 +4,13 @@ import pandas as pd
 
 
 class MidiTokenizer:
-    def __init__(self):
+    def __init__(self, special_tokens: list[str] = None):
         self.token_to_id = None
         self.vocab = []
         self.name = "MidiTokenizer"
+        self.special_tokens = special_tokens
+        if self.special_tokens is None:
+            self.special_tokens = special_tokens
 
     @abstractmethod
     def tokenize(self, record: dict) -> list[str]:

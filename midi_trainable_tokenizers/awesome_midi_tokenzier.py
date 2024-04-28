@@ -17,19 +17,22 @@ class AwesomeMidiTokenizer(MidiTrainableTokenizer):
         bpe_tokenizer: Tokenizer = None,
         max_vocab_size: int = None,
         max_token_length: int = 128,
+        special_tokens: list[str] = None,
     ):
         # this is a tricky tokenizer : it uses base_tokenizer token ids as characters.
         # encryption_offset is used when converting token ids to characters:
         # we do not want to use a NULL, '\n' nor " " character (because it splits the words)
         self.encryption_offset = 100
 
-        super().__init__()
+        super().__init__(special_tokens=special_tokens)
         self.base_tokenizer = base_tokenizer
 
         self.text_tokenizer = bpe_tokenizer
         self.name = "AwesomeMidiTokenizer"
         self.max_vocab_size = max_vocab_size
         self.max_token_length = max_token_length
+        self.special_tokens = special_tokens
+
         if self.max_vocab_size is None:
             self.max_vocab_size = 30000  # default BpeTrainer vocab_size
 
@@ -40,7 +43,7 @@ class AwesomeMidiTokenizer(MidiTrainableTokenizer):
             self.trainer = trainers.BpeTrainer(
                 vocab_size=self.max_vocab_size,
                 max_token_length=self.max_token_length,
-                special_tokens=["<CLS>"],
+                special_tokens=self.special_tokens,
             )
 
         self.vocab = self.text_tokenizer.get_vocab()

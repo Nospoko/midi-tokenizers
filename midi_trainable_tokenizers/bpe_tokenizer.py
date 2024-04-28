@@ -29,7 +29,7 @@ class BpeMidiTokenizer(MidiTrainableTokenizer):
             self.trainer = trainers.BpeTrainer(
                 vocab_size=self.max_vocab_size,
                 max_token_length=512,
-                special_tokens=["<CLS>"],
+                special_tokens=self.special_tokens,
             )
 
         self.vocab = self.text_tokenizer.get_vocab()

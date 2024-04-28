@@ -9,7 +9,8 @@ from midi_tokenizers.midi_tokenizer import MidiTokenizer
 
 
 class MidiTrainableTokenizer(MidiTokenizer):
-    def __init__(self):
+    def __init__(self, special_tokens: list[str] = None):
+        super().__init__(special_tokens=special_tokens)
         self.base_tokenizer: MidiTokenizer = None
         self.text_tokenizer: Tokenizer = None
         self.trainer: trainers.Trainer = None

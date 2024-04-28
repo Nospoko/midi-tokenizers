@@ -15,7 +15,6 @@ class NoLossTokenizer(MidiTokenizer):
         super().__init__()
         self.min_time_unit = min_time_unit
         self.n_velocity_bins = n_velocity_bins
-        self.specials = ["<CLS>"]
         self._build_vocab()
         self.token_to_id = {token: it for it, token in enumerate(self.vocab)}
 
@@ -38,7 +37,7 @@ class NoLossTokenizer(MidiTokenizer):
         return len(self.vocab)
 
     def _build_vocab(self):
-        self.vocab = list(self.specials)
+        self.vocab = list(self.special_tokens)
 
         self.token_to_velocity_bin = {}
         self.velocity_bin_to_token = {}
