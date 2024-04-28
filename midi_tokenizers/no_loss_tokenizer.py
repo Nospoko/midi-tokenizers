@@ -11,8 +11,9 @@ class NoLossTokenizer(MidiTokenizer):
         self,
         min_time_unit: float = 0.001,
         n_velocity_bins: int = 128,
+        special_tokens: list[str] = None,
     ):
-        super().__init__()
+        super().__init__(special_tokens=special_tokens)
         self.min_time_unit = min_time_unit
         self.n_velocity_bins = n_velocity_bins
         self._build_vocab()

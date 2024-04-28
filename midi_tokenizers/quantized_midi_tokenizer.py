@@ -7,7 +7,12 @@ from midi_tokenizers_generation.quantizer_generator import generate_quantizer
 
 
 class QuantizedMidiTokenizer(MidiTokenizer):
-    def __init__(self, quantization_cfg: dict, quantizer_name: str):
+    def __init__(
+        self,
+        quantization_cfg: dict,
+        quantizer_name: str,
+        special_tokens: list[str] = None,
+    ):
         super().__init__()
         self.quantizer_name = quantizer_name
 
