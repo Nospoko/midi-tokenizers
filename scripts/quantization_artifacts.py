@@ -6,7 +6,7 @@ from datasets import load_dataset
 
 
 def create_quantization_artifacts():
-    dataset = load_dataset("roszcz/maestro-v1-sustain", split="train")
+    dataset = load_dataset("roszcz/maestro-sustain-v2", split="train")
     pieces = [MidiPiece.from_huggingface(hf) for hf in dataset]
 
     n_dstarts = range(3, 11)

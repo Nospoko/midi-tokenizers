@@ -31,7 +31,6 @@ class AwesomeMidiTokenizer(MidiTrainableTokenizer):
         self.name = "AwesomeMidiTokenizer"
         self.max_vocab_size = max_vocab_size
         self.max_token_length = max_token_length
-        self.special_tokens = special_tokens
 
         if self.max_vocab_size is None:
             self.max_vocab_size = 30000  # default BpeTrainer vocab_size

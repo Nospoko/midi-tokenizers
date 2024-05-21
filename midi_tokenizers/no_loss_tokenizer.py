@@ -9,18 +9,26 @@ from midi_tokenizers.midi_tokenizer import MidiTokenizer
 class NoLossTokenizer(MidiTokenizer):
     def __init__(
         self,
-        min_time_unit: float = 0.001,
+        min_time_unit: float = 0.01,
         n_velocity_bins: int = 128,
         special_tokens: list[str] = None,
     ):
+        """
+        Initialize the NoLossTokenizer with specified time unit, velocity bins, and special tokens.
+
+        Parameters:
+        min_time_unit (float): The minimum time unit for quantizing time. Defaults to 0.001.
+        n_velocity_bins (int): The number of velocity bins. Defaults to 128.
+        special_tokens (list[str]): A list of special tokens. Defaults to None.
+        """
         super().__init__(special_tokens=special_tokens)
         self.min_time_unit = min_time_unit
         self.n_velocity_bins = n_velocity_bins
         self._build_vocab()
-        self.token_to_id = {token: it for it, token in enumerate(self.vocab)}
 
-        self.velocity_bin_edges = np.linspace(0, 127, num=n_velocity_bins, endpoint=True).astype(int)
-        self.bin_to_velocity = self._build_velocity_decoder()
+        self.velocity_bin_edges = np.linspace(0, 127, num=n_velocity_bins + 1, endpoint=True).astype(int)
+
+        self._build_velocity_decoder()
         self.token_to_id = {token: it for it, token in enumerate(self.vocab)}
         self.name = "NoLossTokenizer"
 
@@ -38,6 +46,10 @@ class NoLossTokenizer(MidiTokenizer):
         return len(self.vocab)
 
     def _build_vocab(self):
+        """
+        Build the vocabulary of the NoLossTokenizer,
+        including special tokens, note tokens, velocity tokens, and time tokens.
+        """
         self.vocab = list(self.special_tokens)
 
         self.token_to_velocity_bin = {}
@@ -75,7 +87,13 @@ class NoLossTokenizer(MidiTokenizer):
         self.dt_to_token = dt_to_token
         self.max_time_value = self.token_to_dt[time_vocab[-1]]  # Maximum time
 
-    def _time_vocab(self):
+    def _time_vocab(self) -> tuple[dict, dict, dict]:
+        """
+        Generate time tokens and their mappings.
+
+        Returns:
+        tuple[dict, dict, dict]: The time vocabulary, token to time mapping, and time to token mapping.
+        """
         time_vocab = []
         token_to_dt = {}
         dt_to_token = {}
@@ -93,20 +111,37 @@ class NoLossTokenizer(MidiTokenizer):
         return time_vocab, token_to_dt, dt_to_token
 
     def quantize_frame(self, df: pd.DataFrame):
+        """
+        Quantize the velocity values in the DataFrame into bins.
+
+        Parameters:
+        df (pd.DataFrame): The DataFrame containing MIDI data.
+
+        Returns:
+        pd.DataFrame: The quantized DataFrame.
+        """
         df["velocity_bin"] = np.digitize(df["velocity"], self.velocity_bin_edges) - 1
         return df
 
     def _build_velocity_decoder(self):
+        """
+        Build a decoder to convert velocity bins back to velocity values.
+        """
         self.bin_to_velocity = []
         for it in range(1, len(self.velocity_bin_edges)):
             velocity = (self.velocity_bin_edges[it - 1] + self.velocity_bin_edges[it]) / 2
             self.bin_to_velocity.append(int(velocity))
-        return self.bin_to_velocity
 
     @staticmethod
     def _notes_to_events(notes: pd.DataFrame) -> list[dict]:
         """
-        Convert MIDI note dataframe into a dict with on/off events.
+        Convert MIDI note DataFrame into a list of note-on and note-off events.
+
+        Parameters:
+        notes (pd.DataFrame): The DataFrame containing MIDI notes.
+
+        Returns:
+        list[dict]: The list of note events.
         """
         note_on_df: pd.DataFrame = notes.loc[:, ["start", "pitch", "velocity_bin"]]
         note_off_df: pd.DataFrame = notes.loc[:, ["end", "pitch", "velocity_bin"]]
@@ -146,6 +181,15 @@ class NoLossTokenizer(MidiTokenizer):
         return time_tokens
 
     def tokenize(self, notes: pd.DataFrame) -> list[str]:
+        """
+        Convert a time difference into a sequence of time tokens.
+
+        Parameters:
+        dt (float): The time difference to convert.
+
+        Returns:
+        list[str]: The list of time tokens.
+        """
         notes = self.quantize_frame(notes)
         tokens = []
         # Time difference between current and previous events
@@ -232,7 +276,8 @@ class NoLossTokenizer(MidiTokenizer):
         notes = pd.concat(note_groups, axis=0, ignore_index=True).reset_index(drop=True)
 
         notes["end"] = notes["end"].fillna(notes["end"].max())
-
+        # Make all the notes that were pressed for less than min_time_unit have a duration of min_time_unit
+        notes.loc[notes["end"] == notes["start"], "end"] += self.min_time_unit
         notes = notes.sort_values(by="start")
         notes = notes.reset_index(drop=True)
 
