@@ -7,13 +7,37 @@ from midi_tokenizers_generation.quantizer_generator import generate_quantizer
 
 
 class QuantizedMidiTokenizer(MidiTokenizer):
+    """
+    Tokenizer for quantized MIDI data.
+
+    Inherits from MidiTokenizer and utilizes a quantizer to process MIDI data.
+
+    Attributes:
+        quantization_cfg (dict): Configuration for quantization.
+        quantizer_name (str): Name of the quantizer.
+        special_tokens (list[str]): List of special tokens.
+        quantizer: Quantizer object generated based on the configuration.
+        keys (list[str]): Keys used for quantization.
+        vocab (list[str]): Vocabulary of tokens.
+        token_to_id (dict): Mapping from tokens to their IDs.
+        name (str): Name of the tokenizer.
+    """
+
     def __init__(
         self,
         quantization_cfg: dict,
         quantizer_name: str,
         special_tokens: list[str] = None,
     ):
-        super().__init__()
+        """
+        Initialize the QuantizedMidiTokenizer with specified quantization configuration and quantizer name.
+
+        Parameters:
+        quantization_cfg (dict): Configuration for quantization.
+        quantizer_name (str): Name of the quantizer.
+        special_tokens (list[str], optional): List of special tokens. Defaults to None.
+        """
+        super().__init__(special_tokens=special_tokens)
         self.quantizer_name = quantizer_name
 
         self.quantizer = generate_quantizer(
@@ -44,6 +68,10 @@ class QuantizedMidiTokenizer(MidiTokenizer):
         return {"quantization_cfg": self.quantization_cfg, "quantizer_name": self.quantizer_name}
 
     def _build_vocab(self):
+        """
+        Build the vocabulary of the QuantizedMidiTokenizer,
+        including all possible combinations of quantized pitch, dstart, duration, and velocity values.
+        """
         # get product of all possible bin numbers - always use 88 pitch values
         iterables = [range(self.quantization_cfg[f"n_{key}s"]) for key in self.keys if key != "pitch"]
         iterables = [range(21, 109)] + iterables
@@ -54,6 +82,15 @@ class QuantizedMidiTokenizer(MidiTokenizer):
             self.vocab.append(key)
 
     def tokenize(self, notes: pd.DataFrame) -> list[str]:
+        """
+        Convert a DataFrame of MIDI notes into a list of tokens.
+
+        Parameters:
+        notes (pd.DataFrame): The DataFrame of MIDI notes to tokenize.
+
+        Returns:
+        list[str]: The list of tokens.
+        """
         tokens = []
         notes = self.quantizer.quantize_frame(df=notes)
         n_samples = len(notes[self.keys[0]])
@@ -64,6 +101,15 @@ class QuantizedMidiTokenizer(MidiTokenizer):
         return tokens
 
     def untokenize(self, tokens: list[str]) -> pd.DataFrame:
+        """
+        Convert a list of tokens back into a DataFrame of MIDI notes.
+
+        Parameters:
+        tokens (list[str]): The list of tokens to untokenize.
+
+        Returns:
+        pd.DataFrame: The DataFrame of untokenized MIDI notes.
+        """
         notes = []
         for token in tokens:
             if token in self.special_tokens:

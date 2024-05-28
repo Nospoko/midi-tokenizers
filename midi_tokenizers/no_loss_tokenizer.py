@@ -7,6 +7,19 @@ from midi_tokenizers.midi_tokenizer import MidiTokenizer
 
 
 class ExponentialTimeTokenizer(MidiTokenizer):
+    """
+    Tokenizer for MIDI data using exponential time quantization.
+
+    Attributes:
+        min_time_unit (float): The minimum time unit for quantizing time.
+        n_velocity_bins (int): The number of velocity bins.
+        special_tokens (list[str]): A list of special tokens.
+        token_to_id (dict): Mapping from tokens to their IDs.
+        velocity_bin_edges (np.ndarray): Edges for velocity bins.
+        bin_to_velocity (list[int]): Mapping from bins to velocity values.
+        name (str): Name of the tokenizer.
+    """
+
     def __init__(
         self,
         min_time_unit: float = 0.01,
@@ -266,6 +279,7 @@ class ExponentialTimeTokenizer(MidiTokenizer):
                 else:
                     note_offs.drop(index, inplace=True)
             note_offs = note_offs.reset_index(drop=True)
+
             # we get pairs of note on and note off events for each key-press
             note_ons["end"] = note_offs["end"]
 
