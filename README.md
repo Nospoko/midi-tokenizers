@@ -268,7 +268,7 @@ Like Awesome Tokenizer, but without converting to unicode and only merges time t
 from midi_trainable_tokenizers import BpeMidiTokenizer
 
 # Initialize the base tokenizer
-base_tokenizer = ExponentialTimeTokenizer()
+base_tokenizer = oneTimeTokenizer()
 
 # Initialize the Awesome MIDI Tokenizer
 tokenizer = BpeMidiTokenizer(base_tokenizer=base_tokenizer)
