@@ -125,7 +125,7 @@ class AbsoluteTimeQuantizer(MidiQuantizer):
 
     def apply_quantization(self, df: pd.DataFrame) -> pd.DataFrame:
         """
-        Apply the quantization to the DataFrame, 
+        Apply the quantization to the DataFrame,
         converting bin indices to actual start time, duration, and velocity values.
 
         Parameters:

@@ -97,15 +97,43 @@ name_to_quantizer_factory_map: dict[str, "QuantizerFactory"] = {
 
 
 def quantization_info(name: str):
+    """
+    Get the description of the quantizer.
+
+    Parameters:
+        name (str): Name of the quantizer.
+
+    Returns:
+        str: Description of the quantizer.
+    """
     return name_to_quantizer_factory_map[name].quantizer_desc
 
 
 def generate_quantizer_with_streamlit(name: str) -> MidiQuantizer:
+    """
+    Generate a quantizer with parameters selected using Streamlit widgets.
+
+    Parameters:
+        name (str): Name of the quantizer.
+
+    Returns:
+        MidiQuantizer: Instance of the created quantizer.
+    """
     factory = name_to_quantizer_factory_map[name]
     quantization_cfg = factory.select_parameters()
     return factory.create_quantizer(quantization_cfg)
 
 
 def generate_quantizer(name: str, quantization_cfg: dict) -> MidiQuantizer:
+    """
+    Generate a quantizer with the given parameters.
+
+    Parameters:
+        name (str): Name of the quantizer.
+        quantization_cfg (dict): Dictionary of configuration parameters for the quantizer.
+
+    Returns:
+        MidiQuantizer: Instance of the created quantizer.
+    """
     factory = name_to_quantizer_factory_map[name]
     return factory.create_quantizer(quantization_cfg)

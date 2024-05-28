@@ -91,15 +91,43 @@ name_to_base_factory_map: dict[str, "TokenizerFactory"] = {
 
 
 def tokenizer_info(name: str):
+    """
+    Get the description of the tokenizer.
+
+    Parameters:
+        name (str): Name of the tokenizer.
+
+    Returns:
+        str: Description of the tokenizer.
+    """
     return name_to_base_factory_map[name].tokenizer_desc
 
 
 def generate_tokenizer_with_streamlit(name: str) -> MidiTokenizer:
+    """
+    Generate a tokenizer with parameters selected using Streamlit widgets.
+
+    Parameters:
+        name (str): Name of the tokenizer.
+
+    Returns:
+        MidiTokenizer: Instance of the created tokenizer.
+    """
     factory = name_to_base_factory_map[name]
     parameters = factory.select_parameters()
     return factory.create_tokenizer(parameters)
 
 
 def generate_tokenizer(name: str, parameters: dict) -> MidiTokenizer:
+    """
+    Generate a tokenizer with the given parameters.
+
+    Parameters:
+        name (str): Name of the tokenizer.
+        parameters (dict): Dictionary of parameters for the tokenizer.
+
+    Returns:
+        MidiTokenizer: Instance of the created tokenizer.
+    """
     factory = name_to_base_factory_map[name]
     return factory.create_tokenizer(parameters)
