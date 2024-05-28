@@ -242,7 +242,7 @@ base_tokenizer = ExponentialTimeTokenizer()
 tokenizer = AwesomeMidiTokenizer(base_tokenizer=base_tokenizer)
 
 # Load MIDI dataset
-dataset = load_dataset("roszcz/maestro-v2", split="train")
+dataset = load_dataset("roszcz/maestro-sustain-v2", split="train")
 
 # Train the tokenizer
 tokenizer.train(dataset)
@@ -251,6 +251,10 @@ tokenizer.train(dataset)
 tokens = tokenizer.tokenize(data)
 
 print(tokens)
+```
+Output:
+```plaintext
+['Ŵ±', 'ƘŴ', '²ţ', '\x9b', 'Ɩŵ', '³', 'ƗƖť', '\x99', 'Ɩţ', '\x9c', 'ƗƖŵ', '´Ɨť', '\x9a']
 ```
 
 This example demonstrates how to use the `AwesomeMidiTokenizer` to tokenize a sample MIDI data. The tokenizer first needs to be trained on a dataset before it can be used to tokenize new data. The training process uses the `ExponentialTimeTokenizer` as a base tokenizer and trains the BPE tokenizer on the specified dataset. After training, the tokenizer can convert new MIDI data into a sequence of tokens.
