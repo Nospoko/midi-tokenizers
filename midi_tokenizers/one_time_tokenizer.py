@@ -1,7 +1,7 @@
-from midi_tokenizers.no_loss_tokenizer import NoLossTokenizer
+from midi_tokenizers.no_loss_tokenizer import ExponentialTimeTokenizer
 
 
-class OneTimeTokenizer(NoLossTokenizer):
+class OneTimeTokenizer(ExponentialTimeTokenizer):
     def __init__(
         self,
         min_time_unit: float = 0.001,

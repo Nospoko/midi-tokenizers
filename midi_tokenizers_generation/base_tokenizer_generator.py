@@ -3,8 +3,8 @@ from abc import abstractmethod
 import streamlit as st
 
 from midi_tokenizers.midi_tokenizer import MidiTokenizer
-from midi_tokenizers.no_loss_tokenizer import NoLossTokenizer
 from midi_tokenizers.one_time_tokenizer import OneTimeTokenizer
+from midi_tokenizers.no_loss_tokenizer import ExponentialTimeTokenizer
 from midi_tokenizers.quantized_midi_tokenizer import QuantizedMidiTokenizer
 from midi_tokenizers_generation.quantizer_generator import name_to_quantizer_factory_map
 
@@ -46,7 +46,7 @@ class QuantizedMidiTokenizerFactory(TokenizerFactory):
         return QuantizedMidiTokenizer(**parameters)
 
 
-class NoLossTokenizerFactory(TokenizerFactory):
+class ExponentialTimeTokenizerFactory(TokenizerFactory):
     tokenizer_desc = """
     This tokenizer uses multiple time tokens, rising exponentialy from `eps` to 1 seconds.
 
@@ -60,8 +60,8 @@ class NoLossTokenizerFactory(TokenizerFactory):
         return {"min_time_unit": min_time_unit, "n_velocity_bins": n_velocity_bins}
 
     @staticmethod
-    def create_tokenizer(parameters: dict) -> NoLossTokenizer:
-        return NoLossTokenizer(**parameters)
+    def create_tokenizer(parameters: dict) -> ExponentialTimeTokenizer:
+        return ExponentialTimeTokenizer(**parameters)
 
 
 class OneTimeTokenizerFactory(TokenizerFactory):
@@ -78,13 +78,13 @@ class OneTimeTokenizerFactory(TokenizerFactory):
         return {"min_time_unit": min_time_unit, "n_velocity_bins": n_velocity_bins}
 
     @staticmethod
-    def create_tokenizer(parameters: dict) -> NoLossTokenizer:
+    def create_tokenizer(parameters: dict) -> ExponentialTimeTokenizer:
         return OneTimeTokenizer(**parameters)
 
 
 # append new factories to this dict when new Tokenizers are defined.
 name_to_base_factory_map: dict[str, "TokenizerFactory"] = {
-    "NoLossTokenizer": NoLossTokenizerFactory(),
+    "ExponentialTimeTokenizer": ExponentialTimeTokenizerFactory(),
     "OneTimeTokenizer": OneTimeTokenizerFactory(),
     "QuantizedMidiTokenizer": QuantizedMidiTokenizerFactory(),
 }

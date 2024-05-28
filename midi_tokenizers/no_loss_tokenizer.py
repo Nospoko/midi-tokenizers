@@ -6,7 +6,7 @@ import pandas as pd
 from midi_tokenizers.midi_tokenizer import MidiTokenizer
 
 
-class NoLossTokenizer(MidiTokenizer):
+class ExponentialTimeTokenizer(MidiTokenizer):
     def __init__(
         self,
         min_time_unit: float = 0.01,
@@ -14,7 +14,7 @@ class NoLossTokenizer(MidiTokenizer):
         special_tokens: list[str] = None,
     ):
         """
-        Initialize the NoLossTokenizer with specified time unit, velocity bins, and special tokens.
+        Initialize the ExponentialTimeTokenizer with specified time unit, velocity bins, and special tokens.
 
         Parameters:
         min_time_unit (float): The minimum time unit for quantizing time. Defaults to 0.001.
@@ -30,10 +30,10 @@ class NoLossTokenizer(MidiTokenizer):
 
         self._build_velocity_decoder()
         self.token_to_id = {token: it for it, token in enumerate(self.vocab)}
-        self.name = "NoLossTokenizer"
+        self.name = "ExponentialTimeTokenizer"
 
     def __rich_repr__(self):
-        yield "NoLossTokenizer"
+        yield "ExponentialTimeTokenizer"
         yield "min_time_unit", self.min_time_unit
         yield "vocab_size", self.vocab_size
 
@@ -47,7 +47,7 @@ class NoLossTokenizer(MidiTokenizer):
 
     def _build_vocab(self):
         """
-        Build the vocabulary of the NoLossTokenizer,
+        Build the vocabulary of the ExponentialTimeTokenizer,
         including special tokens, note tokens, velocity tokens, and time tokens.
         """
         self.vocab = list(self.special_tokens)
