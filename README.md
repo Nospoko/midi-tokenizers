@@ -170,7 +170,7 @@ tokens = exp_time_tokenizer.tokenize(data)
 print(tokens)
 ```
 
-### Output
+#### Output
 The output tokens might look like this:
 
 ```
@@ -179,7 +179,7 @@ The output tokens might look like this:
 
 In this example, the tokens represent the time intervals (`1T`, `2T`), velocities (`VELOCITY_92`, `VELOCITY_110`, etc.), and the note events (`NOTE_ON_74`, `NOTE_OFF_74`, etc.).
 
-### Benefits
+#### Benefits
 
 The `ExponentialTimeTokenizer` provides an efficient and compact representation of MIDI data, preserving the essential musical information while minimizing data redundancy.
 ### One-Time Tokenizer
