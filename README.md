@@ -1,6 +1,24 @@
 # MIDI Tokenizers
 
 The `midi_tokenizers` package provides utilities to tokenize and process MIDI files for various tasks, including music generation and analysis. The package includes different tokenization and quantization methods for experiments.
+
+## Table of Contents
+- [Installation](#installation)
+- [Package Contents](#package-contents)
+- [Dashboards](#dashboards)
+  - [Running the Main Dashboard](#running-the-main-dashboard)
+  - [Dashboard Structure](#dashboard-structure)
+- [Tokenization Methods](#tokenization-methods)
+  - [Loading and Tokenizing MIDI Data](#loading-and-tokenizing-midi-data)
+  - [Exponential Time Tokenizer](#exponential-time-tokenizer)
+  - [One-Time Tokenizer](#one-time-tokenizer)
+  - [Quantized MIDI Tokenizer](#quantized-midi-tokenizer)
+  - [Awesome MIDI Tokenizer](#awesome-midi-tokenizer)
+  - [BPE MIDI Tokenizer](#bpe-midi-tokenizer)
+- [Saving and Loading Tokenizers](#saving-and-loading-tokenizers)
+  - [Saving a Tokenizer](#saving-a-tokenizer)
+  - [Loading a Tokenizer](#loading-a-tokenizer)
+- [Code Style](#code-style)
 ### Installation
 
 To install the package, you can clone the GitHub repository and use pip to install it:
@@ -301,10 +319,6 @@ bpe_tokenizer.save_tokenizer('bpe_tokenizer.json')
 # Load the tokenizer
 loaded_tokenizer = BpeMidiTokenizer.from_file('bpe_tokenizer.json')
 ```
-
-## Contributing
-
-Contributions are welcome! If you have any issues or feature requests, please open an issue on the [GitHub repository](https://github.com/Nospoko/midi-quantizers).
 
 ## Code Style
 
