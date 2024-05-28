@@ -284,18 +284,6 @@ tokens = tokenzier.tokenize(data)
 print(tokens)
 ```
 
-## Tokenization and Quantization Methods
-
-### Tokenization
-
-Tokenization is the process of converting MIDI data into a sequence of tokens that can be processed by machine learning models. Different tokenizers use different strategies to represent the MIDI data as tokens.
-
-### Quantization
-
-Quantization is the process of binning continuous MIDI data (such as note start times and velocities) into discrete values. This allows representing MIDI data in the form of tokens.
-
-###
-
 ## Saving and Loading Tokenizers
 
 Tokenizers can be saved to disk and loaded back when needed. This allows you to train a tokenizer once and reuse it without retraining.
