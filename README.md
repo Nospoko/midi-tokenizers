@@ -28,6 +28,10 @@ git clone https://github.com/Nospoko/midi-tokenizers.git
 cd midi-tokenizers
 pip install .
 ```
+or
+```bash
+pip install git+https://github.com/Nospoko/midi-quantizers
+```
 
 ## Package Contents
 
