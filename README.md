@@ -35,15 +35,27 @@ pip install git+https://github.com/Nospoko/midi-quantizers
 
 ## Package Contents
 
-The `midi_tokenizers` package includes the following modules and classes:
+The `midi_tokenizers` package includes various tokenizers and quantizers for converting MIDI data into sequences of tokens:
 
-- **MidiTokenizer**: Base class for all MIDI tokenizers.
-- **OneTimeTokenizer**: Tokenizer that uses a single time token.
-- **ExponentialTimeTokenizer**: Tokenizer that uses multiple time tokens, rising exponentially.
-- **QuantizedMidiTokenizer**: Tokenizer that uses quantization to first bin the data and then treats all possible combinations as separate tokens.
+### midi-tokenizers
+
+- **MidiTokenizer**: Abstract base class for all MIDI tokenizers.
+- **OneTimeTokenizer**: Uses a single time token for basic tokenization tasks.
+- **ExponentialTimeTokenizer**: Encodes time intervals using an exponential scheme for detailed musical sequences.
+- **QuantizedMidiTokenizer**: Quantizes MIDI data into bins before tokenization for consistent representation.
+
+### midi-trainable-tokenizers
+
 - **MidiTrainableTokenizer**: Base class for trainable MIDI tokenizers.
-- **BpeMidiTokenizer**: BPE-based tokenizer for MIDI data.
-- **AwesomeMidiTokenizer**: MIDI tokenizer that uses BPE and encodes base tokenizer token IDs as characters.
+- **BpeMidiTokenizer**: Uses Byte-Pair Encoding (BPE) to merge common sequences and reduce token count.
+- **AwesomeMidiTokenizer**: Advanced tokenizer using BPE with character-based encoding for enhanced context.
+
+### midi-quantizers
+
+- **MidiQuantizer**: Base class for all MIDI quantizers.
+- **AbsoluteTimeQuantizer**: Discretizes absolute start times and durations.
+- **RelativeTimeQuantizer**: Discretizes time intervals between notes and durations.
+
 
 ### Dashboards
 
