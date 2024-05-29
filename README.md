@@ -30,7 +30,7 @@ pip install .
 ```
 or
 ```bash
-pip install git+https://github.com/Nospoko/midi-quantizers
+pip install git+https://github.com/Nospoko/midi-tokenizers
 ```
 
 ## Package Contents
