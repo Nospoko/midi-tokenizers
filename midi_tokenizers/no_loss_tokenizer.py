@@ -39,7 +39,7 @@ class ExponentialTimeTokenizer(MidiTokenizer):
         self.n_velocity_bins = n_velocity_bins
         self._build_vocab()
 
-        self.velocity_bin_edges = np.linspace(0, 127, num=n_velocity_bins + 1, endpoint=True).astype(int)
+        self.velocity_bin_edges = np.linspace(0, 128, num=n_velocity_bins + 1, endpoint=True).astype(int)
 
         self._build_velocity_decoder()
         self.token_to_id = {token: it for it, token in enumerate(self.vocab)}
