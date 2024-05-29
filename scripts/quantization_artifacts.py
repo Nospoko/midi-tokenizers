@@ -6,7 +6,7 @@ from datasets import load_dataset
 
 
 def create_quantization_artifacts():
-    dataset = load_dataset("roszcz/maestro-v1-sustain", split="train")
+    dataset = load_dataset("roszcz/maestro-sustain-v2", split="train")
     pieces = [MidiPiece.from_huggingface(hf) for hf in dataset]
 
     n_dstarts = range(3, 11)
@@ -34,7 +34,7 @@ def create_quantization_artifacts():
         "dstart": dstarts,
     }
 
-    with open("artifacts/bin_edges.yaml", "w") as f:
+    with open("midi_quantization_artifacts/bin_edges.yaml", "w") as f:
         yaml.dump(bin_edges, f)
 
     return bin_edges

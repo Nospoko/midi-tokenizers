@@ -2,9 +2,9 @@ from abc import abstractmethod
 
 import streamlit as st
 
-from quantizers.quantizer import MidiQuantizer
-from quantizers.absolute_time_quantizer import AbsoluteTimeQuantizer
-from quantizers.relative_time_quantizer import RelativeTimeQuantizer
+from midi_quantizers.quantizer import MidiQuantizer
+from midi_quantizers.absolute_time_quantizer import AbsoluteTimeQuantizer
+from midi_quantizers.relative_time_quantizer import RelativeTimeQuantizer
 
 
 class QuantizerFactory:
@@ -25,15 +25,15 @@ class QuantizerFactory:
 
 class AbsoluteTimeQuantizerFactory(QuantizerFactory):
     quantizer_desc = """
-    artifacts/bin_edges.yaml stores bin edges calculated using quantiles -
+    midi_quantization_artifacts/bin_edges.yaml stores bin edges calculated using quantiles -
     notes in maestro dataset are evenly distributed into each bin.
 
     - `pitch`: uses all 88 pitch values
-    - `velocity`: quantization using bins from artifacts/bin_edges.yaml
+    - `velocity`: quantization using bins from midi_quantization_artifacts/bin_edges.yaml
     - timing:
         - `start`: quantizes start into `n_start_bins` bins, evenly distributed across `sequence_duration`.
         If the piece is longer that `sequence_duration`, all late notes will land in the last bin.
-        - `duration`: quantization using bins from artifacts/bin_edges.yaml
+        - `duration`: quantization using bins from midi_quantization_artifacts/bin_edges.yaml
     """
 
     @staticmethod
@@ -60,15 +60,15 @@ class AbsoluteTimeQuantizerFactory(QuantizerFactory):
 
 class RelativeTimeQuantizerFactory(QuantizerFactory):
     quantizer_desc = """
-    artifacts/bin_edges.yaml stores bin edges calculated using quantiles -
+    midi_quantization_artifacts/bin_edges.yaml stores bin edges calculated using quantiles -
     notes in maestro dataset are evenly distributed into each bin.
 
     - `pitch`: uses all 88 pitch values
-    - `velocity`: quantization using bins from artifacts/bin_edges.yaml
+    - `velocity`: quantization using bins from midi_quantization_artifacts/bin_edges.yaml
     - timing:
         - `dstart`: Calculates time between consecutive notes played.
-        Quantizes this time into bins specified in artifacts/bin_edges.yaml
-        - `duration`: quantization using bins from artifacts/bin_edges.yaml
+        Quantizes this time into bins specified in midi_quantization_artifacts/bin_edges.yaml
+        - `duration`: quantization using bins from midi_quantization_artifacts/bin_edges.yaml
     """
 
     @staticmethod
@@ -89,22 +89,51 @@ class RelativeTimeQuantizerFactory(QuantizerFactory):
         return RelativeTimeQuantizer(**quantization_cfg)
 
 
-class QuantizerGenerator:
-    # append new factories to this dict when new Quantizers are defined.
-    name_to_factory_map: dict[str, "QuantizerFactory"] = {
-        "AbsoluteTimeQuantizer": AbsoluteTimeQuantizerFactory(),
-        "RelativeTimeQuantizer": RelativeTimeQuantizerFactory(),
-    }
+# append new factories to this dict when new Quantizers are defined.
+name_to_quantizer_factory_map: dict[str, "QuantizerFactory"] = {
+    "AbsoluteTimeQuantizer": AbsoluteTimeQuantizerFactory(),
+    "RelativeTimeQuantizer": RelativeTimeQuantizerFactory(),
+}
 
-    def quantization_info(self, name: str):
-        return self.name_to_factory_map[name].quantizer_desc
 
-    def generate_quantizer_with_streamlit(self, name: str) -> MidiQuantizer:
-        factory = self.name_to_factory_map[name]
-        quantization_cfg = factory.select_parameters()
+def quantization_info(name: str):
+    """
+    Get the description of the quantizer.
 
-        return factory.create_quantizer(quantization_cfg)
+    Parameters:
+        name (str): Name of the quantizer.
 
-    def generate_quantizer(self, name: str, quantization_cfg: dict) -> MidiQuantizer:
-        factory = self.name_to_factory_map[name]
-        return factory.create_quantizer(quantization_cfg)
+    Returns:
+        str: Description of the quantizer.
+    """
+    return name_to_quantizer_factory_map[name].quantizer_desc
+
+
+def generate_quantizer_with_streamlit(name: str) -> MidiQuantizer:
+    """
+    Generate a quantizer with parameters selected using Streamlit widgets.
+
+    Parameters:
+        name (str): Name of the quantizer.
+
+    Returns:
+        MidiQuantizer: Instance of the created quantizer.
+    """
+    factory = name_to_quantizer_factory_map[name]
+    quantization_cfg = factory.select_parameters()
+    return factory.create_quantizer(quantization_cfg)
+
+
+def generate_quantizer(name: str, quantization_cfg: dict) -> MidiQuantizer:
+    """
+    Generate a quantizer with the given parameters.
+
+    Parameters:
+        name (str): Name of the quantizer.
+        quantization_cfg (dict): Dictionary of configuration parameters for the quantizer.
+
+    Returns:
+        MidiQuantizer: Instance of the created quantizer.
+    """
+    factory = name_to_quantizer_factory_map[name]
+    return factory.create_quantizer(quantization_cfg)

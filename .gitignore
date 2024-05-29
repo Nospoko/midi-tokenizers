@@ -1,1 +1,6 @@
 *__pycache__*
+data/*
+dumps/*
+*.egg-info
+build/*
+notes.py
