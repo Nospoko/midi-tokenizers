@@ -60,7 +60,9 @@ class MidiTrainableTokenizer(MidiTokenizer):
             self.prepare_data_for_training(file_name=file, train_dataset=train_dataset)
 
             self.text_tokenizer.train([file], trainer=self.trainer)
-            self.vocab = self.text_tokenizer.get_vocab()
+            # Initialize token-to-ID mapping - huggingface vocab is like our token_to_id
+            self.token_to_id = self.text_tokenizer.get_vocab()
+            self.vocab = [token for token, it in self.token_to_id.items()]
         finally:
             # make sure to always clean up
             os.unlink(file)
@@ -74,7 +76,9 @@ class MidiTrainableTokenizer(MidiTokenizer):
         """
         self.text_tokenizer.train_from_iterator(dataset, trainer=self.trainer)
 
-        self.vocab = self.text_tokenizer.get_vocab()
+        # Initialize token-to-ID mapping - huggingface vocab is like our token_to_id
+        self.token_to_id = self.text_tokenizer.get_vocab()
+        self.vocab = [token for token, it in self.token_to_id.items()]
 
     @abstractmethod
     def save_tokenizer(self, path: str):

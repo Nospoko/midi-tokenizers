@@ -69,7 +69,7 @@ class AwesomeMidiTokenizer(MidiTrainableTokenizer):
 
         # Initialize token-to-ID mapping - huggingface vocab is like our token_to_id
         self.token_to_id = self.text_tokenizer.get_vocab()
-        self.vocab = {it: token for token, it in self.token_to_id.items()}
+        self.vocab = [token for token, it in self.token_to_id.items()]
 
     def awesome_tokens_to_base_ids(self, awesome_tokens: list[str]) -> list[int]:
         """
