@@ -216,6 +216,17 @@ def main():
     st.write(f"number of tokens: {len(tokens)}")
     with st.expander(label="tokens"):
         st.write(tokens)
+    base_tokens = [
+        [base_tokenizer.vocab[idx] for idx in trainable_midi_tokenizer.awesome_tokens_to_base_ids([token])] for token in tokens
+    ]
+    with st.expander(label="base_tokens"):
+        st.write(base_tokens)
+    base_vocab = [
+        (token, [base_tokenizer.vocab[idx] for idx in trainable_midi_tokenizer.awesome_tokens_to_base_ids([token])])
+        for token in trainable_midi_tokenizer.vocab[1000:1100]
+    ]
+    with st.expander(label="base_vocab"):
+        st.write(base_vocab)
 
 
 if __name__ == "__main__":

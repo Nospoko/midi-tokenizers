@@ -133,6 +133,7 @@ class ExponentialTimeTokenizer(MidiTokenizer):
         Returns:
         pd.DataFrame: The quantized DataFrame.
         """
+        df = df.copy()
         df["velocity_bin"] = np.digitize(df["velocity"], self.velocity_bin_edges) - 1
         return df
 

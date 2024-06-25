@@ -93,6 +93,7 @@ class MidiTokenizer:
         Returns:
             list[int]: List of token IDs.
         """
+        notes = notes.copy()
         tokens = self.tokenize(notes)
         token_ids = [self.token_to_id[token] for token in tokens]
         return token_ids
