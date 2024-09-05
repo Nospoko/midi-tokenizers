@@ -90,7 +90,8 @@ class MidiTokenizer:
         pad_to_size: int = 0,
         prefix_tokens: list[str] = [],
     ) -> list[int]:
-        encoding = super().encode(notes)
+        tokens = self.tokenize(notes)
+        encoding = [self.token_to_id[token] for token in tokens]
 
         padding_size = pad_to_size - len(encoding) - len(prefix_tokens)
 
