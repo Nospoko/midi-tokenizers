@@ -27,7 +27,7 @@ class MidiTokenizer:
         self.special_tokens = special_tokens
         if self.special_tokens is None:
             self.special_tokens = ["<PAD>", "<CLS>"]
-        self.pad_token_id = self.token_to_id["<PAD>"]
+        self.pad_token_id = 0
 
     @abstractmethod
     def tokenize(self, record: dict) -> list[str]:

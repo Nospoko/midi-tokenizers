@@ -4,7 +4,6 @@ from fortepyan import MidiPiece
 from datasets import load_dataset
 
 from midi_tokenizers.no_loss_tokenizer import ExponentialTimeTokenizer
-from midi_tokenizers.optimised_no_loss_tokenizer import OptimisedExponentialTimeTokenizer
 
 
 def load_midi_pieces(dataset):
@@ -57,31 +56,6 @@ def main():
     loading_end_time = time.time()
     loading_time = loading_end_time - loading_start_time
     print(f"MidiPieces loaded in {loading_time:.2f} seconds")
-
-    tokenizer = OptimisedExponentialTimeTokenizer(min_time_unit=0.01, n_velocity_bins=32)
-
-    print("\nRunning speed test for OptimisedExponentialTimeTokenizer tokenizer on validation split")
-    print(f"Dataset size: {len(midi_pieces)} records")
-
-    # Measure tokenization speed
-    tokenization_time, total_tokens, tokenization_speed, tokenized_pieces = measure_tokenization_speed(
-        tokenizer,
-        midi_pieces,
-    )
-    print("\nTokenization:")
-    print(f"Total time: {tokenization_time:.2f} seconds")
-    print(f"Total tokens: {total_tokens}")
-    print(f"Tokenization speed: {tokenization_speed:.2f} tokens/second")
-
-    # Measure untokenization speed
-    untokenization_time, _, untokenization_speed = measure_untokenization_speed(
-        tokenizer,
-        tokenized_pieces,
-    )
-    print("\nUntokenization:")
-    print(f"Total time: {untokenization_time:.2f} seconds")
-    print(f"Total tokens: {total_tokens}")
-    print(f"Untokenization speed: {untokenization_speed:.2f} tokens/second")
 
     tokenizer = ExponentialTimeTokenizer(min_time_unit=0.01, n_velocity_bins=32)
 

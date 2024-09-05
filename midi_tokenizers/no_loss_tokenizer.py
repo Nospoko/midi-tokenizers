@@ -1,5 +1,3 @@
-import re
-
 import numpy as np
 import pandas as pd
 
@@ -36,7 +34,6 @@ class ExponentialTimeTokenizer(MidiTokenizer):
         """
         super().__init__(special_tokens=special_tokens)
         self.min_time_unit = min_time_unit
-
         self.n_velocity_bins = n_velocity_bins
         self._build_vocab()
 
@@ -48,6 +45,7 @@ class ExponentialTimeTokenizer(MidiTokenizer):
 
         self.step_to_token = {int(round(dt / min_time_unit)): token for dt, token in self.dt_to_token.items()}
         self.token_to_step = {token: step for step, token in self.step_to_token.items()}
+        self.pad_token_id = self.token_to_id["<PAD>"]
 
     def __rich_repr__(self):
         yield "ExponentialTimeTokenizer"
@@ -203,105 +201,65 @@ class ExponentialTimeTokenizer(MidiTokenizer):
         return time_tokens
 
     def tokenize(self, notes: pd.DataFrame) -> list[str]:
-        """
-        Convert a time difference into a sequence of time tokens.
-
-        Parameters:
-        dt (float): The time difference to convert.
-
-        Returns:
-        list[str]: The list of time tokens.
-        """
         notes = self.quantize_frame(notes)
+        notes = notes.sort_values(by="pitch", kind="stable")
+        notes.sort_values(by="start", kind="stable")
+        events = self._notes_to_events(notes)
+
         tokens = []
-        # Time difference between current and previous events
         previous_time = 0
-        note_events = self._notes_to_events(notes=notes)
 
-        for current_event in note_events:
-            # Calculate the time difference between current and previous event
-            dt = current_event["time"] - previous_time
-
-            # Fill the time gap
-            time_tokens = self.tokenize_time_distance(dt=dt)
-            tokens += time_tokens
-
-            event_type = current_event["event"]
-
-            # Append note event tokens
-            velocity = int(current_event["velocity_bin"])
-            tokens.append(self.velocity_bin_to_token[velocity])
-            pitch = int(current_event["pitch"])
-            if event_type == "NOTE_ON":
-                tokens.append(self.pitch_to_on_token[pitch])
+        for event in events:
+            dt = event["time"] - previous_time
+            tokens.extend(self.tokenize_time_distance(dt))
+            tokens.append(self.velocity_bin_to_token[event["velocity_bin"]])
+            if event["event"] == "NOTE_ON":
+                tokens.append(self.pitch_to_on_token[event["pitch"]])
             else:
-                tokens.append(self.pitch_to_off_token[pitch])
-
-            previous_time = current_event["time"]
+                tokens.append(self.pitch_to_off_token[event["pitch"]])
+            previous_time = event["time"]
 
         return tokens
 
-    def untokenize(self, tokens: list[str]) -> pd.DataFrame:
-        note_on_events = []
-        note_off_events = []
-
+    def untokenize(self, tokens: list[str], complete_notes: bool = False) -> pd.DataFrame:
+        events = []
         current_time = 0
         current_velocity = 0
+
         for token in tokens:
-            if re.search(".T$", token) is not None:
-                dt: float = self.token_to_dt[token]
-                current_time += dt
-            if "VELOCITY" in token:
-                # velocity should always be right before NOTE_ON token
-                current_velocity_bin = self.token_to_velocity_bin[token]
-                current_velocity: int = self.bin_to_velocity[current_velocity_bin]
-            if "NOTE_ON" in token:
-                note = {
-                    "pitch": self.token_to_pitch[token],
-                    "start": current_time,
-                    "velocity": current_velocity,
-                }
-                note_on_events.append(note)
-            if "NOTE_OFF" in token:
-                note = {
-                    "pitch": self.token_to_pitch[token],
-                    "end": current_time,
-                }
-                note_off_events.append(note)
+            if token.endswith("T"):
+                current_time += self.token_to_dt[token]
+            elif token.startswith("VELOCITY"):
+                current_velocity = self.bin_to_velocity[self.token_to_velocity_bin[token]]
+            elif token.startswith("NOTE_ON"):
+                events.append((current_time, "on", self.token_to_pitch[token], current_velocity))
+            elif token.startswith("NOTE_OFF"):
+                events.append((current_time, "off", self.token_to_pitch[token], 0))
 
-        # Both should be sorted by time right now
-        note_on_events = pd.DataFrame(note_on_events)
-        note_off_events = pd.DataFrame(note_off_events)
+        events.sort()  # Sort by time
+        notes = []
+        open_notes = {}
 
-        # So if we group them by pitch ...
-        pitches = note_on_events["pitch"].unique()
-        note_groups = []
+        for time, event_type, pitch, velocity in events:
+            if event_type == "on":
+                if pitch in open_notes:
+                    # Close the previous note if it's still open
+                    start, vel = open_notes.pop(pitch)
+                    notes.append({"pitch": pitch, "start": start, "end": time, "velocity": vel})
+                open_notes[pitch] = (time, velocity)
+            elif event_type == "off":
+                if pitch in open_notes:
+                    start, vel = open_notes.pop(pitch)
+                    notes.append({"pitch": pitch, "start": start, "end": time, "velocity": vel})
 
-        for pitch in pitches:
-            note_offs = note_off_events[note_off_events["pitch"] == pitch].copy().reset_index(drop=True)
-            note_ons = note_on_events[note_on_events["pitch"] == pitch].copy().reset_index(drop=True)
+        # Close any remaining open notes
+        if complete_notes:
+            for pitch, (start, vel) in open_notes.items():
+                notes.append({"pitch": pitch, "start": start, "end": time, "velocity": vel})
 
-            # and ignore (drop) all unmatched NOTE_OFF events ...
-            for index, row in note_offs.iterrows():
-                if row["end"] > note_ons.iloc[0]["start"]:
-                    break
-                else:
-                    note_offs.drop(index, inplace=True)
-            note_offs = note_offs.reset_index(drop=True)
-
-            # we get pairs of note on and note off events for each key-press
-            note_ons["end"] = note_offs["end"]
-
-            note_ons.loc[note_ons["end"] <= note_ons["start"]] = np.nan
-            note_ons = note_ons.dropna(axis=0)
-            note_groups.append(note_ons)
-
-        notes = pd.concat(note_groups, axis=0, ignore_index=True).reset_index(drop=True)
-
-        notes["end"] = notes["end"].fillna(notes["end"].max())
-        # Make all the notes that were pressed for less than min_time_unit have a duration of min_time_unit
-        notes.loc[notes["end"] == notes["start"], "end"] += self.min_time_unit
-        notes = notes.sort_values(by="start")
-        notes = notes.reset_index(drop=True)
-
-        return notes
+        notes_df = pd.DataFrame(notes)
+        if not notes_df.empty:
+            notes_df.loc[notes_df["end"] == notes_df["start"], "end"] += self.min_time_unit
+            notes_df = notes_df.sort_values(by="pitch", kind="stable")
+            notes_df = notes_df.sort_values("start", kind="stable").reset_index(drop=True)
+        return notes_df
