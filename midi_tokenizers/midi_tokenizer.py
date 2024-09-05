@@ -90,6 +90,7 @@ class MidiTokenizer:
         pad_to_size: int = 0,
         prefix_tokens: list[str] = [],
     ) -> list[int]:
+        notes = notes.copy()
         tokens = self.tokenize(notes)
         encoding = [self.token_to_id[token] for token in tokens]
 
