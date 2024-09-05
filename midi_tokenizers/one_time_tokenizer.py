@@ -35,6 +35,7 @@ class OneTimeTokenizer(ExponentialTimeTokenizer):
             special_tokens=special_tokens,
         )
         self.name = "OneTimeTokenizer"
+        self.pad_token_id = self.token_to_id["<PAD>"]
 
     def _time_vocab(self):
         return ["1T"], {"1T": self.min_time_unit}, {self.min_time_unit: "1T"}

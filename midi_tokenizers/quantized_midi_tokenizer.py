@@ -54,6 +54,7 @@ class QuantizedMidiTokenizer(MidiTokenizer):
         self._build_vocab()
         self.token_to_id = {token: it for it, token in enumerate(self.vocab)}
         self.name = "QuantizedMidiTokenizer"
+        self.pad_token_id = self.token_to_id["<PAD>"]
 
     def __rich_repr__(self):
         yield "QuantizedMidiTokenizer"

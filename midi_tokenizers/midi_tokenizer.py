@@ -26,7 +26,8 @@ class MidiTokenizer:
         self.name = "MidiTokenizer"
         self.special_tokens = special_tokens
         if self.special_tokens is None:
-            self.special_tokens = ["<CLS>"]
+            self.special_tokens = ["<PAD>", "<CLS>"]
+        self.pad_token_id = 0
 
     @abstractmethod
     def tokenize(self, record: dict) -> list[str]:
@@ -83,17 +84,19 @@ class MidiTokenizer:
 
         return df
 
-    def encode(self, notes: pd.DataFrame) -> list[int]:
-        """
-        Encodes a DataFrame of notes into a list of token IDs.
-
-        Parameters:
-            notes (pd.DataFrame): DataFrame of notes to encode.
-
-        Returns:
-            list[int]: List of token IDs.
-        """
+    def encode(
+        self,
+        notes: pd.DataFrame,
+        pad_to_size: int = 0,
+        prefix_tokens: list[str] = [],
+    ) -> list[int]:
         notes = notes.copy()
         tokens = self.tokenize(notes)
-        token_ids = [self.token_to_id[token] for token in tokens]
-        return token_ids
+        encoding = [self.token_to_id[token] for token in tokens]
+
+        padding_size = pad_to_size - len(encoding) - len(prefix_tokens)
+
+        prefix_ids = [self.token_to_id[token] for token in prefix_tokens]
+        padding = [self.pad_token_id] * padding_size
+
+        return prefix_ids + encoding + padding
