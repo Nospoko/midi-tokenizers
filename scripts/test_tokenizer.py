@@ -5,6 +5,7 @@ import pandas as pd
 from fortepyan import MidiPiece
 from datasets import load_dataset
 
+from midi_trainable_tokenizers import AwesomeMidiTokenizer
 from midi_tokenizers.no_loss_tokenizer import ExponentialTimeTokenizer
 
 
@@ -90,6 +91,7 @@ def main():
     print(f"MidiPieces loaded in {loading_time:.2f} seconds")
 
     tokenizer = ExponentialTimeTokenizer(min_time_unit=0.01, n_velocity_bins=32)
+    # tokenizer = AwesomeMidiTokenizer.from_file("dumps/awesome_tokenizers/awesome-tokenizer-test-2024-06-11_17-11-44.json")
 
     print("\nRunning speed and accuracy test for ExponentialTimeTokenizer on validation split")
     print(f"Dataset size: {len(midi_pieces)} records")

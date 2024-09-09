@@ -181,6 +181,14 @@ class AwesomeMidiTokenizer(MidiTrainableTokenizer):
         base_tokens = [self.base_tokenizer.vocab[base_token_id] for base_token_id in base_token_ids]
         return self.base_tokenizer.untokenize(tokens=base_tokens)
 
+    def to_dict(self):
+        tokenizer_desc = {
+            "base_tokenizer": self.base_tokenizer.name,
+            "base_tokenizer_parameters": self.base_tokenizer.parameters,
+            "bpe_tokenizer": self.text_tokenizer.to_str(),
+        }
+        return tokenizer_desc
+
     def save_tokenizer(self, path: str):
         """
         Save the tokenizer to a specified path.
@@ -188,13 +196,19 @@ class AwesomeMidiTokenizer(MidiTrainableTokenizer):
         Parameters:
             path (str): The path to save the tokenizer.
         """
-        tokenizer_desc = {
-            "base_tokenizer": self.base_tokenizer.name,
-            "base_tokenizer_parameters": self.base_tokenizer.parameters,
-            "bpe_tokenizer": self.text_tokenizer.to_str(),
-        }
+        tokenizer_desc = self.to_dict()
         with open(path, "w+") as f:
             json.dump(tokenizer_desc, f)
+
+    @classmethod
+    def from_dict(cls, tokenizer_desc: str) -> "AwesomeMidiTokenizer":
+        base_tokenizer_name = tokenizer_desc["base_tokenizer"]
+        parameters = tokenizer_desc["base_tokenizer_parameters"]
+        bpe_tokenizer_json = tokenizer_desc["bpe_tokenizer"]
+
+        base_tokenizer = generate_base_tokenizer(name=base_tokenizer_name, parameters=parameters)
+        tokenizer = Tokenizer.from_str(bpe_tokenizer_json)
+        return cls(base_tokenizer=base_tokenizer, bpe_tokenizer=tokenizer)
 
     @classmethod
     def from_file(cls, path: str) -> "AwesomeMidiTokenizer":
@@ -210,10 +224,4 @@ class AwesomeMidiTokenizer(MidiTrainableTokenizer):
         with open(path, "r") as f:
             tokenizer_desc = json.load(f)
 
-        base_tokenizer_name = tokenizer_desc["base_tokenizer"]
-        parameters = tokenizer_desc["base_tokenizer_parameters"]
-        bpe_tokenizer_json = tokenizer_desc["bpe_tokenizer"]
-
-        base_tokenizer = generate_base_tokenizer(name=base_tokenizer_name, parameters=parameters)
-        tokenizer = Tokenizer.from_str(bpe_tokenizer_json)
-        return cls(base_tokenizer=base_tokenizer, bpe_tokenizer=tokenizer)
+        return AwesomeMidiTokenizer.from_dict(tokenizer_desc=tokenizer_desc)

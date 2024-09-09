@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "midi_tokenizers"
-version = "1.2"
+version = "1.2.1"
 authors = [
   { name="Wojciech Matejuk", email="wmatejuk14@gmail.com" },
   { name = "algrtm", email = "office@algrtm.com" }
@@ -25,7 +25,7 @@ dependencies = [
   "PyYAML~=6.0.1",
 ]
 [project.urls]
-Homepage = "https://github.com/Nospoko/midi-quantizers"
+Homepage = "https://github.com/Nospoko/midi-tokenizers"
 
 [tool.setuptools]
 packages = [
