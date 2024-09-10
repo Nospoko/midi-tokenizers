@@ -100,3 +100,10 @@ class MidiTokenizer:
         padding = [self.pad_token_id] * padding_size
 
         return prefix_ids + encoding + padding
+
+    @classmethod
+    def from_dict(cls, tokenizer_desc) -> dict:
+        return cls(**tokenizer_desc["parameters"])
+
+    def to_dict(self) -> dict:
+        return {"name": self.name, "parameters": self.parameters}
