@@ -54,7 +54,11 @@ class ExponentialTimeTokenizer(MidiTokenizer):
 
     @property
     def parameters(self):
-        return {"min_time_unit": self.min_time_unit, "n_velocity_bins": self.n_velocity_bins}
+        return {
+            "min_time_unit": self.min_time_unit,
+            "n_velocity_bins": self.n_velocity_bins,
+            "special_tokens": self.special_tokens,
+        }
 
     @property
     def vocab_size(self) -> int:
