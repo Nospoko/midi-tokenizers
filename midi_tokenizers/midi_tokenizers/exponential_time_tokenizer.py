@@ -216,8 +216,8 @@ class ExponentialTimeTokenizer(MidiTokenizer):
         for event in events:
             dt = event["time"] - previous_time
             tokens.extend(self.tokenize_time_distance(dt))
-            tokens.append(self.velocity_bin_to_token[event["velocity_bin"]])
             if event["event"] == "NOTE_ON":
+                tokens.append(self.velocity_bin_to_token[event["velocity_bin"]])
                 tokens.append(self.pitch_to_on_token[event["pitch"]])
             else:
                 tokens.append(self.pitch_to_off_token[event["pitch"]])
