@@ -143,6 +143,7 @@ class ExponentialTimeTokenizer(MidiTokenizer):
         df["velocity_bin"] = np.digitize(df["velocity"], self.velocity_bin_edges) - 1
         df["start"] = np.round(df["start"] / self.min_time_unit) * self.min_time_unit
         df["end"] = np.round(df["end"] / self.min_time_unit) * self.min_time_unit
+        # We have to manually prevent notes with 0.0 duration after rounding
         df.loc[df["start"] == df["end"], "end"] += self.min_time_unit
         df["duration"] = df["end"] - df["start"]
         return df
