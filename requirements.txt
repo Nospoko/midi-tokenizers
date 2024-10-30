@@ -3,5 +3,6 @@ fortepyan>=0.2.8
 numpy~=1.26.3
 pandas~=2.1.4
 PyYAML~=6.0.1
+streamlit==1.37.0
 streamlit-pianoroll>=0.7.1
 tokenizers>=0.15.2
