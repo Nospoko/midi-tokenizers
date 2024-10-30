@@ -66,7 +66,7 @@ class AbsoluteTimeQuantizer(MidiQuantizer):
         """
         Load bin edges for start time, duration, and velocity from a YAML file.
         """
-        artifacts_path = "midi_quantization_artifacts/bin_edges.yaml"
+        artifacts_path = "midi_tokenizers/midi_quantization_artifacts/bin_edges.yaml"
         with open(artifacts_path, "r") as f:
             bin_edges = yaml.safe_load(f)
 
