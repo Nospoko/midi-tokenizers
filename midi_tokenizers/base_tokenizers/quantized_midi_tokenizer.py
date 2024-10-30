@@ -2,7 +2,7 @@ import itertools
 
 import pandas as pd
 
-from midi_tokenizers.midi_tokenizers.midi_tokenizer import MidiTokenizer
+from midi_tokenizers.base_tokenizers.midi_tokenizer import MidiTokenizer
 from midi_tokenizers.midi_tokenizers_generation.quantizer_generator import generate_quantizer
 
 

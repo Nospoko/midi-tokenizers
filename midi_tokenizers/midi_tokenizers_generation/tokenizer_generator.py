@@ -3,7 +3,7 @@ from glob import glob
 
 import streamlit as st
 
-from midi_tokenizers.midi_tokenizers.midi_tokenizer import MidiTokenizer
+from midi_tokenizers.base_tokenizers.midi_tokenizer import MidiTokenizer
 from midi_tokenizers.midi_trainable_tokenizers.bpe_tokenizer import BpeMidiTokenizer
 from midi_tokenizers.midi_trainable_tokenizers.awesome_midi_tokenzier import AwesomeMidiTokenizer
 from midi_tokenizers.midi_tokenizers_generation.base_tokenizer_generator import TokenizerFactory, name_to_base_factory_map

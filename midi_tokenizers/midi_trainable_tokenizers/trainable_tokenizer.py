@@ -5,7 +5,7 @@ from abc import abstractmethod
 from datasets import Dataset
 from tokenizers import Tokenizer, trainers
 
-from midi_tokenizers.midi_tokenizers.midi_tokenizer import MidiTokenizer
+from midi_tokenizers.base_tokenizers.midi_tokenizer import MidiTokenizer
 
 
 class MidiTrainableTokenizer(MidiTokenizer):

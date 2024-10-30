@@ -29,5 +29,5 @@ Homepage = "https://github.com/Nospoko/midi-tokenizers"
 
 [tool.setuptools]
 packages = [
-"midi_tokenizers",
+"midi_tokenizers"
 ]
