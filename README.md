@@ -256,8 +256,7 @@ When applying BPE to MIDI data, the process involves several steps to convert th
 Here is an example demonstrating the process:
 
 ```python
-from midi_trainable_tokenizers import AwesomeMidiTokenizer
-from midi_tokenizers import ExponentialTimeTokenizer
+from midi_tokenizers import ExponentialTimeTokenizer, AwesomeMidiTokenizer
 from datasets import load_dataset
 import pandas as pd
 
@@ -299,7 +298,7 @@ This process ensures efficient encoding of MIDI data with minimal loss of inform
 ### BPE MIDI Tokenizer
 Like Awesome Tokenizer, but without converting to unicode and only merges time tokens.
 ```python
-from midi_trainable_tokenizers import BpeMidiTokenizer
+from midi_tokenizers import BpeMidiTokenizer
 
 # Initialize the base tokenizer
 base_tokenizer = oneTimeTokenizer()

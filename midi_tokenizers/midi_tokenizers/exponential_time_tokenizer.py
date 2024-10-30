@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 
-from midi_tokenizers.midi_tokenizer import MidiTokenizer
+from midi_tokenizers.midi_tokenizers.midi_tokenizer import MidiTokenizer
 
 
 class ExponentialTimeTokenizer(MidiTokenizer):

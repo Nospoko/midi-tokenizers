@@ -2,9 +2,9 @@ from abc import abstractmethod
 
 import streamlit as st
 
-from midi_quantizers.quantizer import MidiQuantizer
-from midi_quantizers.absolute_time_quantizer import AbsoluteTimeQuantizer
-from midi_quantizers.relative_time_quantizer import RelativeTimeQuantizer
+from midi_tokenizers.midi_quantizers.quantizer import MidiQuantizer
+from midi_tokenizers.midi_quantizers.absolute_time_quantizer import AbsoluteTimeQuantizer
+from midi_tokenizers.midi_quantizers.relative_time_quantizer import RelativeTimeQuantizer
 
 
 class QuantizerFactory:

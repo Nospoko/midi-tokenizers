@@ -4,7 +4,7 @@ import streamlit_pianoroll
 from fortepyan import MidiPiece
 from datasets import Dataset, load_dataset
 
-from midi_tokenizers_generation.quantizer_generator import (
+from midi_tokenizers.midi_tokenizers_generation.quantizer_generator import (
     quantization_info,
     name_to_quantizer_factory_map,
     generate_quantizer_with_streamlit,

@@ -2,11 +2,11 @@ from abc import abstractmethod
 
 import streamlit as st
 
-from midi_tokenizers.midi_tokenizer import MidiTokenizer
-from midi_tokenizers.one_time_tokenizer import OneTimeTokenizer
-from midi_tokenizers.no_loss_tokenizer import ExponentialTimeTokenizer
-from midi_tokenizers.quantized_midi_tokenizer import QuantizedMidiTokenizer
-from midi_tokenizers_generation.quantizer_generator import name_to_quantizer_factory_map
+from midi_tokenizers.midi_tokenizers.midi_tokenizer import MidiTokenizer
+from midi_tokenizers.midi_tokenizers.one_time_tokenizer import OneTimeTokenizer
+from midi_tokenizers.midi_tokenizers.quantized_midi_tokenizer import QuantizedMidiTokenizer
+from midi_tokenizers.midi_tokenizers.exponential_time_tokenizer import ExponentialTimeTokenizer
+from midi_tokenizers.midi_tokenizers_generation.quantizer_generator import name_to_quantizer_factory_map
 
 
 class TokenizerFactory:

@@ -2,7 +2,7 @@ import yaml
 import numpy as np
 import pandas as pd
 
-from midi_quantizers.quantizer import MidiQuantizer
+from midi_tokenizers.midi_quantizers.quantizer import MidiQuantizer
 
 
 class RelativeTimeQuantizer(MidiQuantizer):

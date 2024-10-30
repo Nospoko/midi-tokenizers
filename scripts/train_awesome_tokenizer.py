@@ -2,8 +2,8 @@ import datetime
 
 from datasets import load_dataset
 
-from midi_tokenizers.one_time_tokenizer import ExponentialTimeTokenizer
-from midi_trainable_tokenizers.awesome_midi_tokenzier import AwesomeMidiTokenizer
+from midi_tokenizers.midi_tokenizers.one_time_tokenizer import ExponentialTimeTokenizer
+from midi_tokenizers.midi_trainable_tokenizers.awesome_midi_tokenzier import AwesomeMidiTokenizer
 
 # This is a script for training a BpeMidiTokenizer
 
