@@ -27,7 +27,5 @@ dependencies = [
 [project.urls]
 Homepage = "https://github.com/Nospoko/midi-tokenizers"
 
-[tool.setuptools]
-packages = [
-"midi_tokenizers"
-]
+[tool.setuptools.packages.find]
+include = ["midi_tokenizers*"]
