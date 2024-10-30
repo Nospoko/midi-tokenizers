@@ -104,11 +104,11 @@ For example, for `min_time_unit=0.01`, time token values are:
 {
     "1T": "10ms",
     "2T": "20ms",
-    "3T": "40ms",
-    "4T": "80ms",
-    "5T": "160ms",
-    "6T": "320ms",
-    "7T": "640ms",
+    "4T": "40ms",
+    "8T": "80ms",
+    "16T": "160ms",
+    "32T": "320ms",
+    "64T": "640ms",
 }
 ```
 
@@ -167,6 +167,7 @@ Let's illustrate the tokenization process with a simple example. Given a DataFra
 
 ```python
 import pandas as pd
+from midi_tokenizers import ExponentialTimeTokenizer
 
 # Sample MIDI data
 data = pd.DataFrame({
@@ -177,7 +178,6 @@ data = pd.DataFrame({
 })
 
 # Initialize the Exponential Time Tokenizer
-from midi_tokenizers import ExponentialTimeTokenizer
 exp_time_tokenizer = ExponentialTimeTokenizer()
 
 # Tokenize the sample data
@@ -190,7 +190,7 @@ print(tokens)
 The output tokens might look like this:
 
 ```
-['VELOCITY_94', 'NOTE_ON_59', '4T', 'VELOCITY_94', 'NOTE_OFF_59', 'VELOCITY_77', 'NOTE_ON_48', '2T', 'VELOCITY_95', 'NOTE_ON_60', '3T', '2T', 'VELOCITY_79', 'NOTE_ON_47', '2T', 'VELOCITY_77', 'NOTE_OFF_48', 'VELOCITY_97', 'NOTE_ON_59', '3T']
+['VELOCITY_94', 'NOTE_ON_59', '4T', '2T', '1T', 'NOTE_OFF_59', '1T', 'VELOCITY_77', 'NOTE_ON_48', '2T', 'VELOCITY_95', 'NOTE_ON_60', '4T', '2T', 'VELOCITY_79', 'NOTE_ON_47', '2T', 'NOTE_OFF_48', '4T', '1T', 'NOTE_OFF_60', '4T', '1T', 'NOTE_OFF_47']
 ```
 
 In this example, the tokens represent the time intervals (`1T`, `2T`), velocities (`VELOCITY_92`, `VELOCITY_110`, etc.), and the note events (`NOTE_ON_74`, `NOTE_OFF_74`, etc.).
@@ -287,7 +287,7 @@ print(tokens)
 ```
 Output:
 ```plaintext
-['Ŵ±', 'ƘŴ', '²ţ', '\x9b', 'Ɩŵ', '³', 'ƗƖť', '\x99', 'Ɩţ', '\x9c', 'ƗƖŵ', '´Ɨť', '\x9a']
+['Ŵ', '²ƘƗƖ³Ɩ', 'ţ\x9cƗ', 'ŵ', '´ƘƗ', 'ť\x9aƗ', '\x9dƘƖ', 'µƘƖ', '\x9b']
 ```
 
 This example demonstrates how to use the `AwesomeMidiTokenizer` to tokenize a sample MIDI data. The tokenizer first needs to be trained on a dataset before it can be used to tokenize new data. The training process uses the `ExponentialTimeTokenizer` as a base tokenizer and trains the BPE tokenizer on the specified dataset. After training, the tokenizer can convert new MIDI data into a sequence of tokens.
