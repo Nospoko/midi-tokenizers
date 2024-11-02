@@ -9,8 +9,8 @@ from fortepyan import MidiPiece
 from datasets import Dataset, load_dataset
 from tokenizers.pre_tokenizers import PreTokenizer
 
-from midi_trainable_tokenizers.bpe_tokenizer import BpeMidiTokenizer
-from midi_tokenizers_generation.base_tokenizer_generator import (
+from midi_tokenizers.midi_trainable_tokenizers.bpe_tokenizer import BpeMidiTokenizer
+from midi_tokenizers.midi_tokenizers_generation.base_tokenizer_generator import (
     tokenizer_info,
     generate_tokenizer,
     name_to_base_factory_map,

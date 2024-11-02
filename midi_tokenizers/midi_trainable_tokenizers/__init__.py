@@ -10,7 +10,7 @@ These classes can be used to preprocess and tokenize MIDI data for various appli
 such as training machine learning models.
 
 Example usage:
-    from midi_trainable_tokenizers import AwesomeMidiTokenizer, BpeMidiTokenizer
+    from midi_tokenizers import AwesomeMidiTokenizer, BpeMidiTokenizer
 
     # Initialize a tokenizer
     base_tokenizer = SomeBaseTokenizer()

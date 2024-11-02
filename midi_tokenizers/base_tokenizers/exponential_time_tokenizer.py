@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 
-from midi_tokenizers.midi_tokenizer import MidiTokenizer
+from midi_tokenizers.base_tokenizers.midi_tokenizer import MidiTokenizer
 
 
 class ExponentialTimeTokenizer(MidiTokenizer):
@@ -126,7 +126,7 @@ class ExponentialTimeTokenizer(MidiTokenizer):
             dt_to_token |= {dt: time_token}
             token_to_dt |= {time_token: dt}
             dt *= 2
-            dt_it += 1
+            dt_it *= 2
         return time_vocab, token_to_dt, dt_to_token
 
     def quantize_frame(self, df: pd.DataFrame):
@@ -143,6 +143,8 @@ class ExponentialTimeTokenizer(MidiTokenizer):
         df["velocity_bin"] = np.digitize(df["velocity"], self.velocity_bin_edges) - 1
         df["start"] = np.round(df["start"] / self.min_time_unit) * self.min_time_unit
         df["end"] = np.round(df["end"] / self.min_time_unit) * self.min_time_unit
+        # We have to manually prevent notes with 0.0 duration after rounding
+        df.loc[df["start"] == df["end"], "end"] += self.min_time_unit
         df["duration"] = df["end"] - df["start"]
         return df
 
@@ -216,8 +218,8 @@ class ExponentialTimeTokenizer(MidiTokenizer):
         for event in events:
             dt = event["time"] - previous_time
             tokens.extend(self.tokenize_time_distance(dt))
-            tokens.append(self.velocity_bin_to_token[event["velocity_bin"]])
             if event["event"] == "NOTE_ON":
+                tokens.append(self.velocity_bin_to_token[event["velocity_bin"]])
                 tokens.append(self.pitch_to_on_token[event["pitch"]])
             else:
                 tokens.append(self.pitch_to_off_token[event["pitch"]])

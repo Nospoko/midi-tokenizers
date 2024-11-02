@@ -5,7 +5,7 @@ import pandas as pd
 from fortepyan import MidiPiece
 from datasets import load_dataset
 
-from midi_tokenizers.no_loss_tokenizer import ExponentialTimeTokenizer
+from midi_tokenizers.base_tokenizers.exponential_time_tokenizer import ExponentialTimeTokenizer
 
 
 def load_midi_pieces(dataset):

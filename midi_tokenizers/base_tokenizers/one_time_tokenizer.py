@@ -1,4 +1,4 @@
-from midi_tokenizers.no_loss_tokenizer import ExponentialTimeTokenizer
+from midi_tokenizers.base_tokenizers.exponential_time_tokenizer import ExponentialTimeTokenizer
 
 
 class OneTimeTokenizer(ExponentialTimeTokenizer):

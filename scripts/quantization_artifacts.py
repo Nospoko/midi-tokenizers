@@ -34,7 +34,7 @@ def create_quantization_artifacts():
         "dstart": dstarts,
     }
 
-    with open("midi_quantization_artifacts/bin_edges.yaml", "w") as f:
+    with open("midi_tokenizersmidi_quantization_artifacts/bin_edges.yaml", "w") as f:
         yaml.dump(bin_edges, f)
 
     return bin_edges
