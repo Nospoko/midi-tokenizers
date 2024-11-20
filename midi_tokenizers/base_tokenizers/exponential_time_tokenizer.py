@@ -229,7 +229,7 @@ class ExponentialTimeTokenizer(MidiTokenizer):
 
     def untokenize(self, tokens: list[str], complete_notes: bool = False) -> pd.DataFrame:
         events = []
-        current_time = 0
+        current_time = 0.0
         current_velocity = 0
 
         for token in tokens:
