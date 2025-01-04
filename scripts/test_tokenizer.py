@@ -32,7 +32,12 @@ def measure_tokenization_speed(tokenizer, midi_pieces):
     total_time = end_time - start_time
     tokens_per_second = total_tokens / total_time
 
-    return total_time, total_tokens, tokens_per_second, tokenized_pieces
+    print("\nTokenization:")
+    print(f"Total time: {total_time:.2f} seconds")
+    print(f"Total tokens: {total_tokens}")
+    print(f"Tokenization speed: {tokens_per_second:.2f} tokens/second")
+
+    return tokenized_pieces
 
 
 # TODO typehints
@@ -50,7 +55,12 @@ def measure_untokenization_speed(tokenizer, tokenized_pieces):
     total_time = end_time - start_time
     tokens_per_second = total_tokens / total_time
 
-    return total_time, total_tokens, tokens_per_second, untokenized_pieces
+    print("\nUntokenization:")
+    print(f"Total time: {total_time:.2f} seconds")
+    print(f"Total tokens: {total_tokens}")
+    print(f"Untokenization speed: {tokens_per_second:.2f} tokens/second")
+
+    return untokenized_pieces
 
 
 def test_tokenizer_accuracy(
@@ -105,24 +115,16 @@ def main():
     print(f"Dataset size: {len(midi_pieces)} records")
 
     # Measure tokenization speed
-    tokenization_time, total_tokens, tokenization_speed, tokenized_pieces = measure_tokenization_speed(
+    tokenized_pieces = measure_tokenization_speed(
         tokenizer=tokenizer,
         midi_pieces=midi_pieces,
     )
-    print("\nTokenization:")
-    print(f"Total time: {tokenization_time:.2f} seconds")
-    print(f"Total tokens: {total_tokens}")
-    print(f"Tokenization speed: {tokenization_speed:.2f} tokens/second")
 
     # Measure untokenization speed
-    untokenization_time, _, untokenization_speed, untokenized_pieces = measure_untokenization_speed(
+    untokenized_pieces = measure_untokenization_speed(
         tokenizer=tokenizer,
         tokenized_pieces=tokenized_pieces,
     )
-    print("\nUntokenization:")
-    print(f"Total time: {untokenization_time:.2f} seconds")
-    print(f"Total tokens: {total_tokens}")
-    print(f"Untokenization speed: {untokenization_speed:.2f} tokens/second")
 
     # Test accuracy
     print("\nTesting accuracy...")
