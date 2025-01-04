@@ -8,6 +8,7 @@ from datasets import load_dataset
 from midi_tokenizers.base_tokenizers.exponential_time_tokenizer import ExponentialTimeTokenizer
 
 
+# TODO typehints
 def load_midi_pieces(dataset):
     midi_pieces = []
     for record in dataset:
@@ -16,6 +17,7 @@ def load_midi_pieces(dataset):
     return midi_pieces
 
 
+# TODO typehints
 def measure_tokenization_speed(tokenizer, midi_pieces):
     start_time = time.time()
     total_tokens = 0
@@ -33,6 +35,7 @@ def measure_tokenization_speed(tokenizer, midi_pieces):
     return total_time, total_tokens, tokens_per_second, tokenized_pieces
 
 
+# TODO typehints
 def measure_untokenization_speed(tokenizer, tokenized_pieces):
     start_time = time.time()
     total_tokens = 0
@@ -51,7 +54,9 @@ def measure_untokenization_speed(tokenizer, tokenized_pieces):
 
 
 def test_tokenizer_accuracy(
-    original_pieces: List[MidiPiece], untokenized_pieces: List[pd.DataFrame], tolerance_ms: float = 10
+    original_pieces: List[MidiPiece],
+    untokenized_pieces: List[pd.DataFrame],
+    tolerance_ms: float = 10,
 ) -> dict:
     total_notes = 0
     notes_within_tolerance = 0
@@ -92,20 +97,28 @@ def main():
     tokenizer = ExponentialTimeTokenizer(min_time_unit=0.01, n_velocity_bins=32)
     tokenizer_desc = tokenizer.to_dict()
     tokenizer = ExponentialTimeTokenizer.from_dict(tokenizer_desc=tokenizer_desc)
-    # tokenizer = AwesomeMidiTokenizer.from_file("dumps/awesome_tokenizers/awesome-tokenizer-test-2024-06-11_17-11-44.json")
+    # tokenizer = AwesomeMidiTokenizer.from_file(
+    #     "dumps/awesome_tokenizers/awesome-tokenizer-test-2024-06-11_17-11-44.json",
+    # )
 
     print("\nRunning speed and accuracy test for ExponentialTimeTokenizer on validation split")
     print(f"Dataset size: {len(midi_pieces)} records")
 
     # Measure tokenization speed
-    tokenization_time, total_tokens, tokenization_speed, tokenized_pieces = measure_tokenization_speed(tokenizer, midi_pieces)
+    tokenization_time, total_tokens, tokenization_speed, tokenized_pieces = measure_tokenization_speed(
+        tokenizer=tokenizer,
+        midi_pieces=midi_pieces,
+    )
     print("\nTokenization:")
     print(f"Total time: {tokenization_time:.2f} seconds")
     print(f"Total tokens: {total_tokens}")
     print(f"Tokenization speed: {tokenization_speed:.2f} tokens/second")
 
     # Measure untokenization speed
-    untokenization_time, _, untokenization_speed, untokenized_pieces = measure_untokenization_speed(tokenizer, tokenized_pieces)
+    untokenization_time, _, untokenization_speed, untokenized_pieces = measure_untokenization_speed(
+        tokenizer=tokenizer,
+        tokenized_pieces=tokenized_pieces,
+    )
     print("\nUntokenization:")
     print(f"Total time: {untokenization_time:.2f} seconds")
     print(f"Total tokens: {total_tokens}")
