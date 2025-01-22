@@ -22,7 +22,7 @@ class ExponentialTimeTokenizer(MidiTokenizer):
         self,
         min_time_unit: float = 0.01,
         n_velocity_bins: int = 128,
-        special_tokens: list[str] = None,
+        n_placeholder_tokens: int = 1024,
     ):
         """
         Initialize the ExponentialTimeTokenizer with specified time unit, velocity bins, and special tokens.
@@ -32,11 +32,16 @@ class ExponentialTimeTokenizer(MidiTokenizer):
         n_velocity_bins (int): The number of velocity bins. Defaults to 128.
         special_tokens (list[str]): A list of special tokens. Defaults to None.
         """
-        super().__init__(special_tokens=special_tokens)
+        super().__init__()
         self.min_time_unit = min_time_unit
         self.n_velocity_bins = n_velocity_bins
-        self._build_vocab()
+        self.n_placeholder_tokens = n_placeholder_tokens
 
+        # Will be changed in _build_vocab
+        self.first_placeholder_token = 0
+        self.original_vocab_size = 0
+
+        self._build_vocab()
         self.velocity_bin_edges = np.linspace(0, 128, num=n_velocity_bins + 1, endpoint=True).astype(int)
 
         self._build_velocity_decoder()
@@ -48,9 +53,9 @@ class ExponentialTimeTokenizer(MidiTokenizer):
         self.pad_token_id = self.token_to_id["<PAD>"]
 
     def __rich_repr__(self):
-        yield "ExponentialTimeTokenizer"
         yield "min_time_unit", self.min_time_unit
         yield "vocab_size", self.vocab_size
+        yield "n_placeholder_tokens", self.n_placeholder_tokens
 
     @property
     def parameters(self):
@@ -64,12 +69,16 @@ class ExponentialTimeTokenizer(MidiTokenizer):
     def vocab_size(self) -> int:
         return len(self.vocab)
 
+    @property
+    def n_placeholder_tokens_left(self):
+        return self.original_vocab_size + self.n_placeholder_tokens - self.first_placeholder_token
+
     def _build_vocab(self):
         """
         Build the vocabulary of the ExponentialTimeTokenizer,
         including special tokens, note tokens, velocity tokens, and time tokens.
         """
-        self.vocab = list(self.special_tokens)
+        self.vocab = ["<PAD>", "<CLS>"]
 
         self.token_to_velocity_bin = {}
         self.velocity_bin_to_token = {}
@@ -101,6 +110,11 @@ class ExponentialTimeTokenizer(MidiTokenizer):
 
         time_vocab, token_to_dt, dt_to_token = self._time_vocab()
         self.vocab += time_vocab
+        self.first_placeholder_token = len(self.vocab)
+        self.original_vocab_size = self.first_placeholder_token
+
+        for it in range(self.n_placeholder_tokens):
+            self.vocab.append(f"<PLACEHOLDER_{it}>")
 
         self.token_to_dt = token_to_dt
         self.dt_to_token = dt_to_token
@@ -128,6 +142,11 @@ class ExponentialTimeTokenizer(MidiTokenizer):
             dt *= 2
             dt_it *= 2
         return time_vocab, token_to_dt, dt_to_token
+
+    def add_special_tokens(self, special_tokens: list[str]):
+        for special_token in special_tokens:
+            self.vocab[self.first_placeholder_token] = special_token
+            self.first_placeholder_token += 1
 
     def quantize_frame(self, df: pd.DataFrame):
         """

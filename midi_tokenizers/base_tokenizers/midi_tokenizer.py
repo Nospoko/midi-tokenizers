@@ -14,7 +14,7 @@ class MidiTokenizer:
         special_tokens (list): List of special tokens.
     """
 
-    def __init__(self, special_tokens: list[str] = None):
+    def __init__(self):
         """
         Initializes the MidiTokenizer with optional special tokens.
 
@@ -24,9 +24,6 @@ class MidiTokenizer:
         self.token_to_id = None
         self.vocab = []
         self.name = "MidiTokenizer"
-        self.special_tokens = special_tokens
-        if self.special_tokens is None:
-            self.special_tokens = ["<PAD>", "<CLS>"]
         self.pad_token_id = 0
 
     @abstractmethod
