@@ -9,23 +9,25 @@ class ExponentialTimeTokenizer(MidiTokenizer):
     Tokenizer for MIDI data using exponential time quantization.
 
     Attributes:
-        min_time_unit (float): The minimum time unit for quantizing time.
-        n_velocity_bins (int): The number of velocity bins.
-        special_tokens (list[str]): A list of special tokens.
-        token_to_id (dict): Mapping from tokens to their IDs.
-        velocity_bin_edges (np.ndarray): Edges for velocity bins.
-        bin_to_velocity (list[int]): Mapping from bins to velocity values.
-        name (str): Name of the tokenizer.
+        min_time_unit (float): Minimum time unit for quantization (default: 0.01)
+        n_velocity_bins (int): Number of velocity quantization bins (default: 128)
+        n_special_ids (int): Number of reserved special token IDs (default: 1024)
+        special_tokens (list[str]): Custom special tokens included in vocabulary
+        first_placeholder_token (int): Index where placeholder tokens begin
+        original_vocab_size (int): Size of vocabulary before adding placeholders
+        token_to_id (dict): Maps token strings to their numerical IDs
+        velocity_bin_edges (np.ndarray): Boundaries for velocity quantization bins
+        bin_to_velocity (list[int]): Maps velocity bins back to MIDI velocity values
+        name (str): Tokenizer identifier ("ExponentialTimeTokenizer")
+        step_to_token (dict): Maps quantized time steps to token strings
+        token_to_step (dict): Maps token strings to quantized time steps
+        pad_token_id (int): ID of the padding token
     """
 
     def __init__(
         self,
         min_time_unit: float = 0.01,
         n_velocity_bins: int = 128,
-        # TODO: I would rename this to `n_special_ids` and allow to initialize
-        # with starting special tokens, the rest will be placeholders.
-        # This allows to do ExponentialTimeTokenizer.from_dict(tokenizer.to_dict())
-        # `special_ids` should suggest "special places in the vocab"
         n_special_ids: int = 1024,
         special_tokens: list[str] = None,
     ):
@@ -33,13 +35,15 @@ class ExponentialTimeTokenizer(MidiTokenizer):
         Initialize the ExponentialTimeTokenizer with specified time unit, velocity bins, and special tokens.
 
         Parameters:
-        min_time_unit (float): The minimum time unit for quantizing time. Defaults to 0.001.
-        n_velocity_bins (int): The number of velocity bins. Defaults to 128.
-        special_tokens (list[str]): A list of special tokens. Defaults to None.
+            min_time_unit: Smallest time unit for quantization, in seconds. Determines timing precision.
+            n_velocity_bins: Number of bins for quantizing MIDI velocity values (1-127).
+            n_special_ids: Number of reserved IDs for special tokens and placeholders.
+            special_tokens: List of special token strings to include in vocabulary.
         """
         super().__init__(special_tokens)
         self.min_time_unit = min_time_unit
         self.n_velocity_bins = n_velocity_bins
+        # `special_ids` should suggest "special places in the vocab"
         self.n_special_ids = n_special_ids
 
         # Will be changed in _build_vocab
