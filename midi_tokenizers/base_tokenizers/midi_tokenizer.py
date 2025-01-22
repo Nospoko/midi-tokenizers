@@ -14,7 +14,7 @@ class MidiTokenizer:
         special_tokens (list): List of special tokens.
     """
 
-    def __init__(self):
+    def __init__(self, special_tokens: list[str] = None):
         """
         Initializes the MidiTokenizer with optional special tokens.
 
@@ -25,6 +25,7 @@ class MidiTokenizer:
         self.vocab = []
         self.name = "MidiTokenizer"
         self.pad_token_id = 0
+        self.special_tokens = special_tokens if special_tokens else []
 
     @abstractmethod
     def tokenize(self, notes_df: pd.DataFrame) -> list[str]:

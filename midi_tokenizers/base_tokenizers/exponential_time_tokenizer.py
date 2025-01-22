@@ -22,7 +22,12 @@ class ExponentialTimeTokenizer(MidiTokenizer):
         self,
         min_time_unit: float = 0.01,
         n_velocity_bins: int = 128,
-        n_placeholder_tokens: int = 1024,
+        # TODO: I would rename this to `n_special_ids` and allow to initialize
+        # with starting special tokens, the rest will be placeholders.
+        # This allows to do ExponentialTimeTokenizer.from_dict(tokenizer.to_dict())
+        # `special_ids` should suggest "special places in the vocab"
+        n_special_ids: int = 1024,
+        special_tokens: list[str] = None,
     ):
         """
         Initialize the ExponentialTimeTokenizer with specified time unit, velocity bins, and special tokens.
@@ -32,10 +37,10 @@ class ExponentialTimeTokenizer(MidiTokenizer):
         n_velocity_bins (int): The number of velocity bins. Defaults to 128.
         special_tokens (list[str]): A list of special tokens. Defaults to None.
         """
-        super().__init__()
+        super().__init__(special_tokens)
         self.min_time_unit = min_time_unit
         self.n_velocity_bins = n_velocity_bins
-        self.n_placeholder_tokens = n_placeholder_tokens
+        self.n_special_ids = n_special_ids
 
         # Will be changed in _build_vocab
         self.first_placeholder_token = 0
@@ -55,13 +60,14 @@ class ExponentialTimeTokenizer(MidiTokenizer):
     def __rich_repr__(self):
         yield "min_time_unit", self.min_time_unit
         yield "vocab_size", self.vocab_size
-        yield "n_placeholder_tokens", self.n_placeholder_tokens
+        yield "n_placeholder_tokens", self.n_special_ids
 
     @property
     def parameters(self):
         return {
             "min_time_unit": self.min_time_unit,
             "n_velocity_bins": self.n_velocity_bins,
+            "n_special_ids": self.n_special_ids,
             "special_tokens": self.special_tokens,
         }
 
@@ -70,8 +76,8 @@ class ExponentialTimeTokenizer(MidiTokenizer):
         return len(self.vocab)
 
     @property
-    def n_placeholder_tokens_left(self):
-        return self.original_vocab_size + self.n_placeholder_tokens - self.first_placeholder_token
+    def n_placeholder_tokens(self):
+        return self.original_vocab_size + self.n_special_ids - self.first_placeholder_token
 
     def _build_vocab(self):
         """
@@ -113,8 +119,13 @@ class ExponentialTimeTokenizer(MidiTokenizer):
         self.first_placeholder_token = len(self.vocab)
         self.original_vocab_size = self.first_placeholder_token
 
-        for it in range(self.n_placeholder_tokens):
+        for it in range(self.n_special_ids):
             self.vocab.append(f"<PLACEHOLDER_{it}>")
+
+        # add special tokens in the placeholder token place
+        for special_token in self.special_tokens:
+            self.vocab[self.first_placeholder_token] = special_token
+            self.first_placeholder_token += 1
 
         self.token_to_dt = token_to_dt
         self.dt_to_token = dt_to_token
@@ -144,6 +155,7 @@ class ExponentialTimeTokenizer(MidiTokenizer):
         return time_vocab, token_to_dt, dt_to_token
 
     def add_special_tokens(self, special_tokens: list[str]):
+        self.special_tokens += special_tokens
         for special_token in special_tokens:
             self.vocab[self.first_placeholder_token] = special_token
             self.first_placeholder_token += 1
