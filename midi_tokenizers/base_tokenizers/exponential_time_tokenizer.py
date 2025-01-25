@@ -67,8 +67,8 @@ class ExponentialTimeTokenizer(MidiTokenizer):
         return f"VELOCITY_{bin}"
 
     @staticmethod
-    def step_to_token(steps: int) -> str:
-        return f"{steps}T"
+    def step_to_token(step: int) -> str:
+        return f"{step}T"
 
     @classmethod
     def _build_lexicon(cls, tokenizer_config: dict) -> TokenizerLexicon:
@@ -145,14 +145,14 @@ class ExponentialTimeTokenizer(MidiTokenizer):
         token_to_steps = {}
 
         dt = min_time_unit
-        steps = 1
+        step = 1
         # Generate time tokens with exponential distribution
         while dt < 1:
-            time_token = cls.step_to_token(steps=steps)
+            time_token = cls.step_to_token(step=step)
             time_tokens.append(time_token)
-            token_to_steps |= {time_token: steps}
+            token_to_steps |= {time_token: step}
             dt *= 2
-            steps *= 2
+            step *= 2
         return time_tokens, token_to_steps
 
     def quantize_frame(self, df: pd.DataFrame):
@@ -250,10 +250,10 @@ class ExponentialTimeTokenizer(MidiTokenizer):
             dt = event["time"] - previous_time
             tokens.extend(self.tokenize_time_distance(dt))
             if event["event"] == "NOTE_ON":
-                tokens.append(self.velocity_bin_to_token[event["velocity_bin"]])
-                tokens.append(self.pitch_to_on_token[event["pitch"]])
+                tokens.append(self.velocity_bin_to_token(event["velocity_bin"]))
+                tokens.append(self.pitch_to_on_token(event["pitch"]))
             else:
-                tokens.append(self.pitch_to_off_token[event["pitch"]])
+                tokens.append(self.pitch_to_off_token(event["pitch"]))
             previous_time = event["time"]
 
         return tokens
@@ -265,7 +265,8 @@ class ExponentialTimeTokenizer(MidiTokenizer):
 
         for token in tokens:
             if token.endswith("T"):
-                current_time += self.lexicon.token_to_value[token]
+                # For time tokens, token_to_value holds number of steps
+                current_time += self.lexicon.token_to_value[token] * self.min_time_unit
             elif token.startswith("VELOCITY"):
                 current_velocity = self.bin_to_velocity[self.lexicon.token_to_value[token]]
             elif token.startswith("NOTE_ON"):

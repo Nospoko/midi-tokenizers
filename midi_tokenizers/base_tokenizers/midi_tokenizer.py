@@ -12,7 +12,7 @@ class TokenizerLexicon:
         vocab: All available tokens
         first_placeholder_id: Starting ID for placeholder tokens
         token_to_id: Maps tokens to their numeric IDs
-        token_to_value: Maps tokens to their semantic values (pitch/velocity/time)
+        token_to_value: Maps tokens to their semantic values (pitch/velocity/time steps)
     """
 
     vocab: list[str]

@@ -5,90 +5,71 @@ from abc import abstractmethod
 from datasets import Dataset
 from tokenizers import Tokenizer, trainers
 
-from midi_tokenizers.base_tokenizers.midi_tokenizer import MidiTokenizer
+from midi_tokenizers.base_tokenizers.midi_tokenizer import MidiTokenizer, TokenizerLexicon
 
 
 class MidiTrainableTokenizer(MidiTokenizer):
-    """
-    Base class for trainable MIDI tokenizers.
+    """Base class for trainable MIDI tokenizers with HuggingFace integration."""
 
-    Inherits from MidiTokenizer and adds functionality for training the tokenizer.
+    def __init__(
+        self,
+        lexicon: TokenizerLexicon,
+        tokenizer_config: dict,
+        base_tokenizer: MidiTokenizer = None,
+        text_tokenizer: Tokenizer = None,
+        trainer: trainers.Trainer = None,
+    ):
+        super().__init__(lexicon=lexicon, tokenizer_config=tokenizer_config)
+        self.base_tokenizer = base_tokenizer
+        self.text_tokenizer = text_tokenizer
+        self.trainer = trainer
 
-    Attributes:
-        base_tokenizer (MidiTokenizer): The base tokenizer used for generating initial tokens.
-        text_tokenizer (Tokenizer): The text tokenizer used for training.
-        trainer (trainers.Trainer): The trainer used for training the text tokenizer.
-    """
-
-    def __init__(self, special_tokens: list[str] = None):
-        """
-        Initialize the MidiTrainableTokenizer with optional special tokens.
-
-        Parameters:
-            special_tokens (list[str], optional): List of special tokens. Defaults to None.
-        """
-        super().__init__(special_tokens=special_tokens)
-        self.base_tokenizer: MidiTokenizer = None
-        self.text_tokenizer: Tokenizer = None
-        self.trainer: trainers.Trainer = None
+    @property
+    def parameters(self):
+        return {
+            "lexicon": self.lexicon,
+            "tokenizer_config": self.tokenizer_config,
+            "base_tokenizer": self.base_tokenizer,
+            "text_tokenizer": self.text_tokenizer,
+            "trainer": self.trainer,
+        }
 
     @abstractmethod
-    def prepare_data_for_training(file_name: str, train_dataset: Dataset):
-        """
-        Abstract method to prepare data for training.
+    def prepare_data_for_training(self, file_name: str, train_dataset: Dataset):
+        """Prepare dataset for training text tokenizer.
 
-        This method should be implemented by subclasses to specify how the training data
-        should be prepared and written to a file.
-
-        Parameters:
-            file_name (str): The name of the file to write the prepared data.
-            train_dataset (Dataset): The dataset to prepare for training.
+        Args:
+            file_name: Output file path
+            train_dataset: Source dataset
         """
         pass
 
     def train(self, train_dataset: Dataset):
-        """
-        Train the tokenizer using the provided training dataset.
-
-        Parameters:
-            train_dataset (Dataset): The dataset to use for training.
-        """
+        """Train tokenizer on dataset."""
         file = "tmp_dump.txt"
-        # create an empy file
         open(file, "w").close()
         try:
-            self.prepare_data_for_training(file_name=file, train_dataset=train_dataset)
-
+            self.prepare_data_for_training(file, train_dataset)
             self.text_tokenizer.train([file], trainer=self.trainer)
-            # Initialize token-to-ID mapping - huggingface vocab is like our token_to_id
-            self.token_to_id = self.text_tokenizer.get_vocab()
-            self.vocab = [token for token, it in self.token_to_id.items()]
+            self._update_vocab()
         finally:
-            # make sure to always clean up
             os.unlink(file)
 
     def train_from_text_dataset(self, dataset: Iterable):
-        """
-        Train the tokenizer directly from a text dataset.
-
-        Parameters:
-            dataset (Iterable): An iterable of text data to use for training.
-        """
+        """Train directly from text dataset."""
         self.text_tokenizer.train_from_iterator(dataset, trainer=self.trainer)
+        self._update_vocab()
 
-        # Initialize token-to-ID mapping - huggingface vocab is like our token_to_id
-        self.token_to_id = self.text_tokenizer.get_vocab()
-        self.vocab = [token for token, it in self.token_to_id.items()]
+    def _update_vocab(self):
+        """Update internal vocab from trained text tokenizer."""
+        self.lexicon.token_to_id = self.text_tokenizer.get_vocab()
+        self.lexicon.vocab = [token for token in self.lexicon.token_to_id]
 
     @abstractmethod
     def save_tokenizer(self, path: str):
-        """
-        Abstract method to save the tokenizer to a specified path.
+        """Save tokenizer state to disk.
 
-        This method should be implemented by subclasses to specify how the tokenizer
-        should be saved to disk.
-
-        Parameters:
-            path (str): The path to save the tokenizer.
+        Args:
+            path: Save location
         """
         pass
