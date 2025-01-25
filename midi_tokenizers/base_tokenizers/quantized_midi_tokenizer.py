@@ -51,7 +51,7 @@ class QuantizedMidiTokenizer(MidiTokenizer):
         self.vocab = list(self.special_tokens)
 
         # add midi tokens to vocab
-        self._build_vocab()
+        self._build_lexicon()
         self.token_to_id = {token: it for it, token in enumerate(self.vocab)}
         self.name = "QuantizedMidiTokenizer"
         self.pad_token_id = self.token_to_id["<PAD>"]
@@ -68,7 +68,7 @@ class QuantizedMidiTokenizer(MidiTokenizer):
     def parameters(self):
         return {"quantization_cfg": self.quantization_cfg, "quantizer_name": self.quantizer_name}
 
-    def _build_vocab(self):
+    def _build_lexicon(self):
         """
         Build the vocabulary of the QuantizedMidiTokenizer,
         including all possible combinations of quantized pitch, dstart, duration, and velocity values.

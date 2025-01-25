@@ -1,65 +1,37 @@
 import numpy as np
 import pandas as pd
 
-from midi_tokenizers.base_tokenizers.midi_tokenizer import MidiTokenizer
+from midi_tokenizers.base_tokenizers.midi_tokenizer import MidiTokenizer, TokenizerLexicon
 
 
 class ExponentialTimeTokenizer(MidiTokenizer):
-    """
-    Tokenizer for MIDI data using exponential time quantization.
-
-    Attributes:
-        min_time_unit (float): Minimum time unit for quantization (default: 0.01)
-        n_velocity_bins (int): Number of velocity quantization bins (default: 128)
-        n_special_ids (int): Number of reserved special token IDs (default: 1024)
-        special_tokens (list[str]): Custom special tokens included in vocabulary
-        first_placeholder_token (int): Index where placeholder tokens begin
-        original_vocab_size (int): Size of vocabulary before adding placeholders
-        token_to_id (dict): Maps token strings to their numerical IDs
-        velocity_bin_edges (np.ndarray): Boundaries for velocity quantization bins
-        bin_to_velocity (list[int]): Maps velocity bins back to MIDI velocity values
-        name (str): Tokenizer identifier ("ExponentialTimeTokenizer")
-        step_to_token (dict): Maps quantized time steps to token strings
-        token_to_step (dict): Maps token strings to quantized time steps
-        pad_token_id (int): ID of the padding token
-    """
-
     def __init__(
         self,
-        min_time_unit: float = 0.01,
-        n_velocity_bins: int = 128,
-        n_special_ids: int = 1024,
-        special_tokens: list[str] = None,
+        lexicon: TokenizerLexicon,
+        tokenizer_config: dict,
     ):
+        """Initialize tokenizer with vocab and quantization settings.
+
+        Args:
+            lexicon (TokenizerLexicon): Vocabulary and mappings storage
+            tokenizer_config (dict): Contains min_time_unit, n_velocity_bins, n_special_ids
         """
-        Initialize the ExponentialTimeTokenizer with specified time unit, velocity bins, and special tokens.
+        super().__init__(lexicon=lexicon, tokenizer_config=tokenizer_config)
+        self.min_time_unit = self.tokenizer_config["min_time_unit"]
+        self.n_velocity_bins = self.tokenizer_config["n_velocity_bins"]
+        self.n_special_ids = self.tokenizer_config["n_special_ids"]
 
-        Parameters:
-            min_time_unit: Smallest time unit for quantization, in seconds. Determines timing precision.
-            n_velocity_bins: Number of bins for quantizing MIDI velocity values (1-127).
-            n_special_ids: Number of reserved IDs for special tokens and placeholders.
-            special_tokens: List of special token strings to include in vocabulary.
-        """
-        super().__init__(special_tokens)
-        self.min_time_unit = min_time_unit
-        self.n_velocity_bins = n_velocity_bins
-        # `special_ids` should suggest "special places in the vocab"
-        self.n_special_ids = n_special_ids
-
-        # Will be changed in _build_vocab
-        self.first_placeholder_token = 0
-        self.original_vocab_size = 0
-
-        self._build_vocab()
-        self.velocity_bin_edges = np.linspace(0, 128, num=n_velocity_bins + 1, endpoint=True).astype(int)
+        self.velocity_bin_edges = np.linspace(
+            0,
+            128,
+            num=self.n_velocity_bins + 1,
+            endpoint=True,
+        ).astype(int)
 
         self._build_velocity_decoder()
-        self.token_to_id = {token: it for it, token in enumerate(self.vocab)}
         self.name = "ExponentialTimeTokenizer"
 
-        self.step_to_token = {int(round(dt / min_time_unit)): token for dt, token in self.dt_to_token.items()}
-        self.token_to_step = {token: step for step, token in self.step_to_token.items()}
-        self.pad_token_id = self.token_to_id["<PAD>"]
+        self.pad_token_id = self.lexicon.token_to_id["<PAD>"]
 
     def __rich_repr__(self):
         yield "min_time_unit", self.min_time_unit
@@ -69,100 +41,119 @@ class ExponentialTimeTokenizer(MidiTokenizer):
     @property
     def parameters(self):
         return {
-            "min_time_unit": self.min_time_unit,
-            "n_velocity_bins": self.n_velocity_bins,
-            "n_special_ids": self.n_special_ids,
-            "special_tokens": self.special_tokens,
+            "lexicon": self.lexicon,
+            "tokenizer_config": self.tokenizer_config,
         }
 
     @property
     def vocab_size(self) -> int:
-        return len(self.vocab)
+        return len(self.lexicon.vocab)
 
     @property
     def n_placeholder_tokens(self):
-        return self.original_vocab_size + self.n_special_ids - self.first_placeholder_token
+        return self.vocab_size - self.lexicon.first_placeholder_id
 
-    def _build_vocab(self):
+    # Token definitions
+    @staticmethod
+    def pitch_to_on_token(pitch: int) -> str:
+        return f"NOTE_ON_{pitch}"
+
+    @staticmethod
+    def pitch_to_off_token(pitch: int) -> str:
+        return f"NOTE_OFF_{pitch}"
+
+    @staticmethod
+    def velocity_bin_to_token(bin: int) -> str:
+        return f"VELOCITY_{bin}"
+
+    @staticmethod
+    def step_to_token(steps: int) -> str:
+        return f"{steps}T"
+
+    @classmethod
+    def _build_lexicon(cls, tokenizer_config: dict) -> TokenizerLexicon:
+        """Construct tokenizer vocabulary and mappings.
+
+        Creates tokens for:
+            - (<PAD>, <CLS>)
+            - MIDI notes (NOTE_ON/OFF_21-108)
+            - Velocities (VELOCITY_0-N)
+            - Time steps (1T-64T)
+            - Placeholders
+
+        Args:
+            tokenizer_config (dict): Contains min_time_unit, n_velocity_bins, n_special_ids
+
+        Returns:
+            TokenizerLexicon: Complete vocabulary with token mappings
         """
-        Build the vocabulary of the ExponentialTimeTokenizer,
-        including special tokens, note tokens, velocity tokens, and time tokens.
-        """
-        self.vocab = ["<PAD>", "<CLS>"]
+        vocab = ["<PAD>", "<CLS>"]
+        token_to_value = {}
 
-        self.token_to_velocity_bin = {}
-        self.velocity_bin_to_token = {}
+        token_to_dt = {}
 
-        self.token_to_pitch = {}
-        self.pitch_to_on_token = {}
-        self.pitch_to_off_token = {}
-
-        self.token_to_dt = {}
-        self.dt_to_token = []
+        n_velocity_bins = tokenizer_config["n_velocity_bins"]
+        n_special_ids = tokenizer_config["n_special_ids"]
+        min_time_unit = tokenizer_config["min_time_unit"]
 
         # Add MIDI note and velocity tokens to the vocabulary
         for pitch in range(21, 109):
-            note_on_token = f"NOTE_ON_{pitch}"
-            note_off_token = f"NOTE_OFF_{pitch}"
+            note_on_token = cls.pitch_to_on_token(pitch=pitch)
+            note_off_token = cls.pitch_to_off_token(pitch=pitch)
 
-            self.vocab.append(note_on_token)
-            self.vocab.append(note_off_token)
+            vocab.append(note_on_token)
+            vocab.append(note_off_token)
 
-            self.token_to_pitch |= {note_on_token: pitch, note_off_token: pitch}
-            self.pitch_to_on_token |= {pitch: note_on_token}
-            self.pitch_to_off_token |= {pitch: note_off_token}
+            token_to_value |= {note_on_token: pitch, note_off_token: pitch}
 
-        for vel in range(self.n_velocity_bins):
-            velocity_token = f"VELOCITY_{vel}"
-            self.vocab.append(velocity_token)
-            self.token_to_velocity_bin |= {velocity_token: vel}
-            self.velocity_bin_to_token |= {vel: velocity_token}
+        for bin in range(n_velocity_bins):
+            velocity_token = cls.velocity_bin_to_token(bin)
+            vocab.append(velocity_token)
 
-        time_vocab, token_to_dt, dt_to_token = self._time_vocab()
-        self.vocab += time_vocab
-        self.first_placeholder_token = len(self.vocab)
-        self.original_vocab_size = self.first_placeholder_token
+            token_to_value |= {velocity_token: bin}
 
-        for it in range(self.n_special_ids):
-            self.vocab.append(f"<PLACEHOLDER_{it}>")
+        time_tokens, token_to_steps = cls._time_vocab(min_time_unit=min_time_unit)
+        vocab += time_tokens
+        token_to_value |= token_to_steps
 
-        # add special tokens in the placeholder token place
-        for special_token in self.special_tokens:
-            self.vocab[self.first_placeholder_token] = special_token
-            self.first_placeholder_token += 1
+        first_placeholder_token = len(vocab)
 
-        self.token_to_dt = token_to_dt
-        self.dt_to_token = dt_to_token
-        self.max_time_value = self.token_to_dt[time_vocab[-1]]  # Maximum time
+        for it in range(n_special_ids):
+            vocab.append(f"<PLACEHOLDER_{it}>")
 
-    def _time_vocab(self) -> tuple[dict, dict, dict]:
+        token_to_value |= token_to_dt
+        # max_time_value = token_to_dt[time_tokens[-1]]  # Maximum time
+        token_to_id = {token: it for it, token in enumerate(vocab)}
+
+        lexicon = TokenizerLexicon(
+            vocab=vocab,
+            first_placeholder_id=first_placeholder_token,
+            token_to_id=token_to_id,
+            token_to_value=token_to_value,
+        )
+        return lexicon
+
+    @classmethod
+    def _time_vocab(cls, min_time_unit: float) -> tuple[dict, dict]:
         """
         Generate time tokens and their mappings.
 
         Returns:
-        tuple[dict, dict, dict]: The time vocabulary, token to time mapping, and time to token mapping.
+        tuple[dict, dict]: The time vocabulary and time_steps to token mapping.
         """
-        time_vocab = []
-        token_to_dt = {}
-        dt_to_token = {}
+        time_tokens = []
+        token_to_steps = {}
 
-        dt_it = 1
-        dt = self.min_time_unit
+        dt = min_time_unit
+        steps = 1
         # Generate time tokens with exponential distribution
         while dt < 1:
-            time_token = f"{dt_it}T"
-            time_vocab.append(time_token)
-            dt_to_token |= {dt: time_token}
-            token_to_dt |= {time_token: dt}
+            time_token = cls.step_to_token(steps=steps)
+            time_tokens.append(time_token)
+            token_to_steps |= {time_token: steps}
             dt *= 2
-            dt_it *= 2
-        return time_vocab, token_to_dt, dt_to_token
-
-    def add_special_tokens(self, special_tokens: list[str]):
-        self.special_tokens += special_tokens
-        for special_token in special_tokens:
-            self.vocab[self.first_placeholder_token] = special_token
-            self.first_placeholder_token += 1
+            steps *= 2
+        return time_tokens, token_to_steps
 
     def quantize_frame(self, df: pd.DataFrame):
         """
@@ -221,17 +212,22 @@ class ExponentialTimeTokenizer(MidiTokenizer):
     def _time_to_steps(self, dt: float) -> int:
         return int(round(dt / self.min_time_unit))
 
+    def _steps_to_time(self, steps: int) -> float:
+        return steps * self.min_time_unit
+
     def tokenize_time_distance(self, dt: float) -> list[str]:
         steps = self._time_to_steps(dt)
         time_tokens = []
         remaining_steps = steps
 
-        # Sort step sizes in descending order
-        sorted_steps = sorted(self.step_to_token.keys(), reverse=True)
+        step_sizes = sorted(
+            [value for token, value in self.lexicon.token_to_value.items() if token.endswith("T")],
+            reverse=True,
+        )
 
-        for step in sorted_steps:
+        for step in step_sizes:
             while remaining_steps >= step:
-                time_tokens.append(self.step_to_token[step])
+                time_tokens.append(self.step_to_token(step))
                 remaining_steps -= step
 
         if remaining_steps > 0:
@@ -269,13 +265,13 @@ class ExponentialTimeTokenizer(MidiTokenizer):
 
         for token in tokens:
             if token.endswith("T"):
-                current_time += self.token_to_dt[token]
+                current_time += self.lexicon.token_to_value[token]
             elif token.startswith("VELOCITY"):
-                current_velocity = self.bin_to_velocity[self.token_to_velocity_bin[token]]
+                current_velocity = self.bin_to_velocity[self.lexicon.token_to_value[token]]
             elif token.startswith("NOTE_ON"):
-                events.append((current_time, "on", self.token_to_pitch[token], current_velocity))
+                events.append((current_time, "on", self.lexicon.token_to_value[token], current_velocity))
             elif token.startswith("NOTE_OFF"):
-                events.append((current_time, "off", self.token_to_pitch[token], 0))
+                events.append((current_time, "off", self.lexicon.token_to_value[token], 0))
 
         events.sort()  # Sort by time
         notes = []

@@ -7,7 +7,7 @@ from tokenizers import Tokenizer, models, trainers, pre_tokenizers
 
 from midi_tokenizers.base_tokenizers.midi_tokenizer import MidiTokenizer
 from midi_tokenizers.midi_trainable_tokenizers.trainable_tokenizer import MidiTrainableTokenizer
-from midi_tokenizers.midi_tokenizers_generation.base_tokenizer_generator import generate_tokenizer as generate_base_tokenizer
+import midi_tokenizers.midi_tokenizers_generation.base_tokenizer_generator as base_tokenizer_generator
 
 
 class AwesomeMidiTokenizer(MidiTrainableTokenizer):
@@ -178,7 +178,7 @@ class AwesomeMidiTokenizer(MidiTrainableTokenizer):
             pd.DataFrame: DataFrame of untokenized MIDI notes.
         """
         base_token_ids = self.awesome_tokens_to_base_ids(tokens)
-        base_tokens = [self.base_tokenizer.vocab[base_token_id] for base_token_id in base_token_ids]
+        base_tokens = [self.base_tokenizer.lexicon[base_token_id] for base_token_id in base_token_ids]
         return self.base_tokenizer.untokenize(tokens=base_tokens)
 
     def to_dict(self):
@@ -206,7 +206,10 @@ class AwesomeMidiTokenizer(MidiTrainableTokenizer):
         parameters = tokenizer_desc["base_tokenizer_parameters"]
         bpe_tokenizer_json = tokenizer_desc["bpe_tokenizer"]
 
-        base_tokenizer = generate_base_tokenizer(name=base_tokenizer_name, parameters=parameters)
+        base_tokenizer = base_tokenizer_generator.generate_tokenizer(
+            name=base_tokenizer_name,
+            parameters=parameters,
+        )
         tokenizer = Tokenizer.from_str(bpe_tokenizer_json)
         return cls(base_tokenizer=base_tokenizer, bpe_tokenizer=tokenizer)
 
