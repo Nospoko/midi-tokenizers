@@ -27,8 +27,7 @@ class MidiTokenizer:
         Args:
             tokenizer_config (dict[str, Any]): Args defining tokenization behavior
         """
-        self._vocab = vocab
-        self.vocab = self._vocab
+        self.vocab = vocab
 
         self.tokenizer_config = tokenizer_config
         self.name = "MidiTokenizer"
