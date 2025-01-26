@@ -27,10 +27,9 @@ class MidiTokenizer:
         Args:
             tokenizer_config (dict[str, Any]): Args defining tokenization behavior
         """
-        self.vocab = vocab
+        self.set_vocab(vocab)
 
         self.tokenizer_config = tokenizer_config
-        self.name = "MidiTokenizer"
 
         self.pad_token_id = self.token_to_id["<PAD>"]
 
@@ -38,19 +37,13 @@ class MidiTokenizer:
     def vocab(self) -> list[str]:
         return self._vocab
 
-    @vocab.setter
-    def vocab(self, new_vocab: list[str]):
+    def set_vocab(self, new_vocab: list[str]):
         self._vocab = new_vocab
         self.token_to_id = {token: i for i, token in enumerate(new_vocab)}
 
     @classmethod
     @abstractmethod
     def build_tokenizer(cls, tokenizer_config: dict) -> "MidiTokenizer":
-        pass
-
-    @classmethod
-    @abstractmethod
-    def _build_lexicon(cls, tokenizer_config: dict) -> dict:
         pass
 
     @abstractmethod
@@ -91,7 +84,7 @@ class MidiTokenizer:
 
     @property
     def vocab_size(self) -> int:
-        return len(self.lexicon.vocab)
+        return len(self.vocab)
 
     def decode(self, token_ids: list[int]) -> pd.DataFrame:
         """
@@ -103,7 +96,7 @@ class MidiTokenizer:
         Returns:
             pd.DataFrame: DataFrame representation of the decoded tokens.
         """
-        tokens = [self.lexicon.vocab[token_id] for token_id in token_ids]
+        tokens = [self.vocab[token_id] for token_id in token_ids]
         notes_df = self.untokenize(tokens)
 
         return notes_df
@@ -156,4 +149,5 @@ class MidiTokenizer:
         return cls(**tokenizer_desc["parameters"])
 
     def to_dict(self) -> dict:
-        return {"name": self.name, "parameters": self.parameters}
+        name = self.__class__.__name__
+        return {"name": name, "parameters": self.parameters}

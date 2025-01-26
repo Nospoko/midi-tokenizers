@@ -104,7 +104,8 @@ def main():
     # Initialize tokenizer with proper config
     tokenizer = ExponentialTimeTokenizer.build_tokenizer(
         tokenizer_config={
-            "min_time_unit": 0.01,
+            "time_unit": 0.01,
+            "max_time_step": 1.0,
             "n_velocity_bins": 32,
             "n_special_ids": 1024,
         }
