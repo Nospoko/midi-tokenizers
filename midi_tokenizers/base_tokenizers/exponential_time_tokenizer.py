@@ -42,10 +42,10 @@ class ExponentialTimeTokenizer(MidiTokenizer):
 
         # List the tokens and step sizes describing time, to use during time tokenization
         self.time_tokens = [t for t in self.vocab if t.endswith("T")]
-        self.step_sizes = sorted([self.token_to_value(t) for t in self.time_tokens], reverse=True)
+        self.step_sizes = sorted([ExponentialTimeTokenizer.token_to_value(t) for t in self.time_tokens], reverse=True)
 
     @classmethod
-    def build_tokenizer(cls, tokenizer_config: dict) -> "MidiTokenizer":
+    def build_tokenizer(cls, tokenizer_config: dict) -> "ExponentialTimeTokenizer":
         lexicon = cls._build_lexicon(tokenizer_config=tokenizer_config)
 
         tokenizer = cls(
@@ -174,15 +174,12 @@ class ExponentialTimeTokenizer(MidiTokenizer):
         Args:
             special_tokens (list[str]): New tokens to add
         """
+        new_vocab = self.vocab.copy()
         for special_token in special_tokens:
-            # Remove placeholder definition
-            placeholder_token = self.vocab[self.first_placeholder_id]
-            self.token_to_id.pop(placeholder_token)
-
             # Switch the placeholder token for a special token
-            self.vocab[self.first_placeholder_id] = special_token
-            self.token_to_id[special_token] = self.first_placeholder_id
+            new_vocab[self.first_placeholder_id] = special_token
             self.first_placeholder_id += 1
+        self.vocab = new_vocab
 
     def quantize_frame(self, df: pd.DataFrame):
         """

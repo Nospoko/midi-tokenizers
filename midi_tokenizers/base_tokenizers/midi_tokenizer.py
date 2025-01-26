@@ -27,13 +27,22 @@ class MidiTokenizer:
         Args:
             tokenizer_config (dict[str, Any]): Args defining tokenization behavior
         """
-        self.vocab = vocab
-        self.token_to_id = {token: it for it, token in enumerate(vocab)}
+        self._vocab = vocab
+        self.vocab = self._vocab
 
         self.tokenizer_config = tokenizer_config
         self.name = "MidiTokenizer"
 
         self.pad_token_id = self.token_to_id["<PAD>"]
+
+    @property
+    def vocab(self) -> list[str]:
+        return self._vocab
+
+    @vocab.setter
+    def vocab(self, new_vocab: list[str]):
+        self._vocab = new_vocab
+        self.token_to_id = {token: i for i, token in enumerate(new_vocab)}
 
     @classmethod
     @abstractmethod
