@@ -33,10 +33,20 @@ class ExponentialTimeTokenizer(MidiTokenizer):
 
         self.pad_token_id = self.lexicon.token_to_id["<PAD>"]
 
+    @classmethod
+    def build_tokenizer(cls, tokenizer_config: dict) -> "MidiTokenizer":
+        lexicon = cls._build_lexicon(tokenizer_config=tokenizer_config)
+
+        tokenizer = cls(
+            lexicon=lexicon,
+            tokenizer_config=tokenizer_config,
+        )
+        return tokenizer
+
     def __rich_repr__(self):
         yield "min_time_unit", self.min_time_unit
         yield "vocab_size", self.vocab_size
-        yield "n_placeholder_tokens", self.n_special_ids
+        yield "n_placeholder_tokens", self.n_placeholder_tokens
 
     @property
     def parameters(self):

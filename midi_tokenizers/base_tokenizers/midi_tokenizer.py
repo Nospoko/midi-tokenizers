@@ -1,3 +1,4 @@
+from typing import Any
 from abc import abstractmethod
 from dataclasses import dataclass
 
@@ -18,7 +19,23 @@ class TokenizerLexicon:
     vocab: list[str]
     first_placeholder_id: int
     token_to_id: dict[str, int]
-    token_to_value: int
+    token_to_value: dict[str, Any]
+
+    def add_special_tokens(self, special_tokens: list[str]):
+        """Add custom tokens by replacing placeholders.
+
+        Args:
+            special_tokens (list[str]): New tokens to add
+        """
+        for special_token in special_tokens:
+            # Remove placeholder definition
+            placeholder_token = self.vocab[self.first_placeholder_id]
+            self.token_to_id.pop(placeholder_token)
+
+            # Switch the placeholder token for a special token
+            self.vocab[self.first_placeholder_id] = special_token
+            self.token_to_id[special_token] = self.first_placeholder_id
+            self.first_placeholder_id += 1
 
 
 class MidiTokenizer:
@@ -48,15 +65,9 @@ class MidiTokenizer:
         self.pad_token_id = lexicon.vocab.index("<PAD>")
 
     @classmethod
+    @abstractmethod
     def build_tokenizer(cls, tokenizer_config: dict) -> "MidiTokenizer":
-        print(cls)
-        lexicon = cls._build_lexicon(tokenizer_config=tokenizer_config)
-
-        tokenizer = cls(
-            lexicon=lexicon,
-            tokenizer_config=tokenizer_config,
-        )
-        return tokenizer
+        pass
 
     # Each tokenizer can have its own way of building vocab
     @classmethod
@@ -70,15 +81,7 @@ class MidiTokenizer:
         Args:
             special_tokens (list[str]): New tokens to add
         """
-        for special_token in special_tokens:
-            # Remove placeholder definition
-            placeholder_token = self.lexicon.vocab[self.lexicon.first_placeholder_id]
-            self.lexicon.token_to_id.pop(placeholder_token)
-
-            # Switch the placeholder token for a special token
-            self.lexicon.vocab[self.lexicon.first_placeholder_id] = special_token
-            self.lexicon.token_to_id[special_token] = self.lexicon.first_placeholder_id
-            self.lexicon.first_placeholder_id += 1
+        self.lexicon.add_special_tokens(special_tokens=special_tokens)
 
     @abstractmethod
     def tokenize(self, notes_df: pd.DataFrame) -> list[str]:
