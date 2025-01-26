@@ -1,26 +1,37 @@
+from typing import Any
+
 import numpy as np
 import pandas as pd
 
-from midi_tokenizers.base_tokenizers.midi_tokenizer import MidiTokenizer, TokenizerLexicon
+from midi_tokenizers.base_tokenizers.midi_tokenizer import MidiTokenizer
 
 
 class ExponentialTimeTokenizer(MidiTokenizer):
     def __init__(
         self,
-        lexicon: TokenizerLexicon,
+        vocab: list[str],
+        first_placeholder_id: int,
+        token_to_value: dict[str, Any],
         tokenizer_config: dict,
     ):
-        """Initialize tokenizer with vocab and quantization settings.
+        """Initialize tokenizer with vocabulary and config.
 
         Args:
-            lexicon (TokenizerLexicon): Vocabulary and mappings storage
-            tokenizer_config (dict): Contains min_time_unit, n_velocity_bins, n_special_ids
+            vocab: All available tokens
+            first_placeholder_id: Starting ID for placeholder tokens
+            token_to_value: Maps tokens to semantic values (pitch/velocity/time)
+            tokenizer_config: Contains min_time_unit, n_velocity_bins, n_special_ids
         """
-        super().__init__(lexicon=lexicon, tokenizer_config=tokenizer_config)
+        super().__init__(
+            vocab=vocab,
+            first_placeholder_id=first_placeholder_id,
+            tokenizer_config=tokenizer_config,
+        )
         self.min_time_unit = self.tokenizer_config["min_time_unit"]
         self.n_velocity_bins = self.tokenizer_config["n_velocity_bins"]
         self.n_special_ids = self.tokenizer_config["n_special_ids"]
 
+        self.token_to_value = token_to_value
         self.velocity_bin_edges = np.linspace(
             0,
             128,
@@ -31,14 +42,14 @@ class ExponentialTimeTokenizer(MidiTokenizer):
         self._build_velocity_decoder()
         self.name = "ExponentialTimeTokenizer"
 
-        self.pad_token_id = self.lexicon.token_to_id["<PAD>"]
-
     @classmethod
     def build_tokenizer(cls, tokenizer_config: dict) -> "MidiTokenizer":
         lexicon = cls._build_lexicon(tokenizer_config=tokenizer_config)
 
         tokenizer = cls(
-            lexicon=lexicon,
+            vocab=lexicon["vocab"],
+            first_placeholder_id=lexicon["first_placeholder_id"],
+            token_to_value=lexicon["token_to_value"],
             tokenizer_config=tokenizer_config,
         )
         return tokenizer
@@ -51,17 +62,19 @@ class ExponentialTimeTokenizer(MidiTokenizer):
     @property
     def parameters(self):
         return {
-            "lexicon": self.lexicon,
+            "vocab": self.vocab,
+            "first_placeholder_id": self.first_placeholder_id,
+            "token_to_value": self.token_to_value,
             "tokenizer_config": self.tokenizer_config,
         }
 
     @property
     def vocab_size(self) -> int:
-        return len(self.lexicon.vocab)
+        return len(self.vocab)
 
     @property
     def n_placeholder_tokens(self):
-        return self.vocab_size - self.lexicon.first_placeholder_id
+        return self.vocab_size - self.first_placeholder_id
 
     # Token definitions
     @staticmethod
@@ -81,7 +94,7 @@ class ExponentialTimeTokenizer(MidiTokenizer):
         return f"{step}T"
 
     @classmethod
-    def _build_lexicon(cls, tokenizer_config: dict) -> TokenizerLexicon:
+    def _build_lexicon(cls, tokenizer_config: dict) -> dict:
         """Construct tokenizer vocabulary and mappings.
 
         Creates tokens for:
@@ -92,10 +105,10 @@ class ExponentialTimeTokenizer(MidiTokenizer):
             - Placeholders
 
         Args:
-            tokenizer_config (dict): Contains min_time_unit, n_velocity_bins, n_special_ids
+        tokenizer_config: Contains min_time_unit, n_velocity_bins, n_special_ids
 
         Returns:
-            TokenizerLexicon: Complete vocabulary with token mappings
+            Dict with vocab, first_placeholder_id, and token_to_value
         """
         vocab = ["<PAD>", "<CLS>"]
         token_to_value = {}
@@ -132,15 +145,12 @@ class ExponentialTimeTokenizer(MidiTokenizer):
             vocab.append(f"<PLACEHOLDER_{it}>")
 
         token_to_value |= token_to_dt
-        # max_time_value = token_to_dt[time_tokens[-1]]  # Maximum time
-        token_to_id = {token: it for it, token in enumerate(vocab)}
 
-        lexicon = TokenizerLexicon(
-            vocab=vocab,
-            first_placeholder_id=first_placeholder_token,
-            token_to_id=token_to_id,
-            token_to_value=token_to_value,
-        )
+        lexicon = {
+            "vocab": vocab,
+            "first_placeholder_id": first_placeholder_token,
+            "token_to_value": token_to_value,
+        }
         return lexicon
 
     @classmethod
@@ -231,7 +241,7 @@ class ExponentialTimeTokenizer(MidiTokenizer):
         remaining_steps = steps
 
         step_sizes = sorted(
-            [value for token, value in self.lexicon.token_to_value.items() if token.endswith("T")],
+            [value for token, value in self.token_to_value.items() if token.endswith("T")],
             reverse=True,
         )
 
@@ -276,13 +286,13 @@ class ExponentialTimeTokenizer(MidiTokenizer):
         for token in tokens:
             if token.endswith("T"):
                 # For time tokens, token_to_value holds number of steps
-                current_time += self.lexicon.token_to_value[token] * self.min_time_unit
+                current_time += self.token_to_value[token] * self.min_time_unit
             elif token.startswith("VELOCITY"):
-                current_velocity = self.bin_to_velocity[self.lexicon.token_to_value[token]]
+                current_velocity = self.bin_to_velocity[self.token_to_value[token]]
             elif token.startswith("NOTE_ON"):
-                events.append((current_time, "on", self.lexicon.token_to_value[token], current_velocity))
+                events.append((current_time, "on", self.token_to_value[token], current_velocity))
             elif token.startswith("NOTE_OFF"):
-                events.append((current_time, "off", self.lexicon.token_to_value[token], 0))
+                events.append((current_time, "off", self.token_to_value[token], 0))
 
         events.sort()  # Sort by time
         notes = []
