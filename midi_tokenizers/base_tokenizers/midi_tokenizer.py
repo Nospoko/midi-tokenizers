@@ -11,9 +11,7 @@ class MidiTokenizer:
 
     Attributes:
         tokenizer_config (dict): Configuration parameters
-        name (str): Tokenizer identifier
         vocab (list[str]): Vecabulary of the tokenizer
-        token_to_id: (dict[str, int]): mapping of tokens to indieces in the vocab
         pad_token_id (int): ID of padding token
     """
 
@@ -39,7 +37,7 @@ class MidiTokenizer:
 
     def set_vocab(self, new_vocab: list[str]):
         self._vocab = new_vocab
-        self.token_to_id = {token: i for i, token in enumerate(new_vocab)}
+        self.token_to_id = {token: it for it, token in enumerate(new_vocab)}
 
     @classmethod
     @abstractmethod

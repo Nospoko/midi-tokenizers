@@ -10,6 +10,7 @@ class ExponentialTimeTokenizer(MidiTokenizer):
     def __init__(
         self,
         vocab: list[str],
+        step_sizes: list[int],
         first_placeholder_id: int,
         tokenizer_config: dict,
     ):
@@ -17,6 +18,7 @@ class ExponentialTimeTokenizer(MidiTokenizer):
 
         Args:
             vocab: All available tokens
+            step_sizes (list[int]): available time step distances
             first_placeholder_id: Starting ID for placeholder tokens
             token_to_value: Maps tokens to semantic values (pitch/velocity/time)
             tokenizer_config: Contains time_unit, n_velocity_bins, n_special_ids
@@ -39,11 +41,7 @@ class ExponentialTimeTokenizer(MidiTokenizer):
 
         self._build_velocity_decoder()
 
-        # List the tokens and step sizes describing time, to use during time tokenization
-        time_tokens = [t for t in self.vocab if t.endswith("T")]
-
         # TODO The requirement for the largest step size being first is very obfuscated
-        step_sizes = [ExponentialTimeTokenizer.token_to_value(t) for t in time_tokens]
         self.step_sizes = sorted(step_sizes, reverse=True)
 
     @classmethod
@@ -52,6 +50,7 @@ class ExponentialTimeTokenizer(MidiTokenizer):
 
         tokenizer = cls(
             vocab=lexicon["vocab"],
+            step_sizes=lexicon["step_sizes"],
             first_placeholder_id=lexicon["first_placeholder_id"],
             tokenizer_config=tokenizer_config,
         )
@@ -66,6 +65,7 @@ class ExponentialTimeTokenizer(MidiTokenizer):
     def parameters(self):
         return {
             "vocab": self.vocab,
+            "step_sizes": self.step_sizes,
             "first_placeholder_id": self.first_placeholder_id,
             "tokenizer_config": self.tokenizer_config,
         }
@@ -132,11 +132,6 @@ class ExponentialTimeTokenizer(MidiTokenizer):
         """
         vocab = ["<PAD>", "<CLS>"]
 
-        n_velocity_bins = tokenizer_config["n_velocity_bins"]
-        n_special_ids = tokenizer_config["n_special_ids"]
-        time_unit = tokenizer_config["time_unit"]
-        max_time_step = tokenizer_config["max_time_step"]
-
         # Add MIDI note and velocity tokens to the vocabulary
         for pitch in range(21, 109):
             note_on_token = cls.pitch_to_on_token(pitch=pitch)
@@ -145,23 +140,28 @@ class ExponentialTimeTokenizer(MidiTokenizer):
             vocab.append(note_on_token)
             vocab.append(note_off_token)
 
+        n_velocity_bins = tokenizer_config["n_velocity_bins"]
         for bin in range(n_velocity_bins):
             velocity_token = cls.velocity_bin_to_token(bin)
             vocab.append(velocity_token)
 
-        time_tokens = cls.build_time_vocab(
+        time_unit = tokenizer_config["time_unit"]
+        max_time_step = tokenizer_config["max_time_step"]
+        time_vocab = cls.build_time_vocab(
             time_unit=time_unit,
             max_time_step=max_time_step,
         )
-        vocab += time_tokens
+        vocab += time_vocab["time_tokens"]
 
         first_placeholder_token = len(vocab)
 
+        n_special_ids = tokenizer_config["n_special_ids"]
         for it in range(n_special_ids):
             vocab.append(f"<PLACEHOLDER_{it}>")
 
         lexicon = {
             "vocab": vocab,
+            "step_sizes": time_vocab["step_sizes"],
             "first_placeholder_id": first_placeholder_token,
         }
         return lexicon
@@ -171,14 +171,15 @@ class ExponentialTimeTokenizer(MidiTokenizer):
         cls,
         time_unit: float,
         max_time_step: float = 1.0,
-    ) -> list[str]:
+    ) -> dict:
         """
         Generate time tokens and their mappings.
 
         Returns:
-        list[str]: The time vocabulary, i.e. ["1T", "2T", ...].
+        dict[str]: Contains time vocabulary and corresponding time step sizes
         """
         time_tokens = []
+        step_sizes = []
 
         dt = time_unit
         step = 1
@@ -186,9 +187,16 @@ class ExponentialTimeTokenizer(MidiTokenizer):
         while dt < max_time_step:
             time_token = cls.step_to_token(step=step)
             time_tokens.append(time_token)
+            step_sizes.append(step)
             dt *= 2
             step *= 2
-        return time_tokens
+
+        time_vocab = {
+            "time_tokens": time_tokens,
+            "step_sizes": step_sizes,
+        }
+
+        return time_vocab
 
     def add_special_tokens(self, special_tokens: list[str]):
         """Add custom tokens by replacing placeholders.
@@ -204,7 +212,7 @@ class ExponentialTimeTokenizer(MidiTokenizer):
 
         self.set_vocab(new_vocab)
 
-    def quantize_frame(self, df: pd.DataFrame):
+    def quantize_frame(self, notes_df: pd.DataFrame) -> pd.DataFrame:
         """
         Quantize the velocity values in the DataFrame into bins.
 
@@ -214,10 +222,11 @@ class ExponentialTimeTokenizer(MidiTokenizer):
         Returns:
         pd.DataFrame: The quantized DataFrame.
         """
-        df = df.copy()
+        df = notes_df.copy()
         df["velocity_bin"] = np.digitize(df["velocity"], self.velocity_bin_edges) - 1
         df["start"] = np.round(df["start"] / self.time_unit) * self.time_unit
         df["end"] = np.round(df["end"] / self.time_unit) * self.time_unit
+
         # We have to manually prevent notes with 0.0 duration after rounding
         df.loc[df["start"] == df["end"], "end"] += self.time_unit
         df["duration"] = df["end"] - df["start"]
@@ -271,10 +280,10 @@ class ExponentialTimeTokenizer(MidiTokenizer):
         n_steps = self._time_to_steps(dt)
         remaining_steps = n_steps
 
-        tokenized_time = []
+        time_tokens = []
         for step in self.step_sizes:
             while remaining_steps >= step:
-                tokenized_time.append(self.step_to_token(step))
+                time_tokens.append(self.step_to_token(step))
                 remaining_steps -= step
 
         if remaining_steps > 0:
@@ -282,17 +291,17 @@ class ExponentialTimeTokenizer(MidiTokenizer):
                 f"Unable to exactly tokenize time distance: {dt} ({n_steps} steps), remaining: {remaining_steps} steps"
             )
 
-        return tokenized_time
+        return time_tokens
 
     def tokenize(self, notes_df: pd.DataFrame) -> list[str]:
         notes_df = self.quantize_frame(notes_df)
 
         # TODO Why do we need a "stable" kind? (I'm guessing we don't)
-        notes_df = notes_df.sort_values(by="pitch", kind="stable")
+        notes_df = notes_df.sort_values(by="pitch")  # , kind="stable")
 
         # FIXME This is not assigned and doesn't do anything ...
         # Should this overwrite notes_df, or be removed? (I'm guessing removed)
-        notes_df.sort_values(by="start", kind="stable")
+        # notes_df.sort_values(by="start", kind="stable")
         events = self._notes_to_events(notes_df)
 
         tokens = []
@@ -300,7 +309,9 @@ class ExponentialTimeTokenizer(MidiTokenizer):
 
         for event in events:
             dt = event["time"] - previous_time
-            tokens.extend(self.tokenize_time_distance(dt))
+            time_tokens = self.tokenize_time_distance(dt)
+            tokens += time_tokens
+
             if event["event"] == "NOTE_ON":
                 tokens.append(self.velocity_bin_to_token(event["velocity_bin"]))
                 tokens.append(self.pitch_to_on_token(event["pitch"]))
