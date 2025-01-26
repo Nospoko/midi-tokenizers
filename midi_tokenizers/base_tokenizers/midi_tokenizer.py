@@ -10,16 +10,16 @@ class MidiTokenizer:
     and encoding schemes.
 
     Attributes:
-        lexicon (TokenizerLexicon): Contains vocab, ids and value mappings
         tokenizer_config (dict): Configuration parameters
         name (str): Tokenizer identifier
+        vocab (list[str]): Vecabulary of the tokenizer
+        token_to_id: (dict[str, int]): mapping of tokens to indieces in the vocab
         pad_token_id (int): ID of padding token
     """
 
     def __init__(
         self,
         vocab: list[str],
-        first_placeholder_id: int,
         tokenizer_config: dict,
     ):
         """Initialize tokenizer with vocabulary and configuration.
@@ -29,7 +29,6 @@ class MidiTokenizer:
         """
         self.vocab = vocab
         self.token_to_id = {token: it for it, token in enumerate(vocab)}
-        self.first_placeholder_id = first_placeholder_id
 
         self.tokenizer_config = tokenizer_config
         self.name = "MidiTokenizer"
@@ -45,22 +44,6 @@ class MidiTokenizer:
     @abstractmethod
     def _build_lexicon(cls, tokenizer_config: dict) -> dict:
         pass
-
-    def add_special_tokens(self, special_tokens: list[str]):
-        """Add custom tokens by replacing placeholders.
-
-        Args:
-            special_tokens (list[str]): New tokens to add
-        """
-        for special_token in special_tokens:
-            # Remove placeholder definition
-            placeholder_token = self.vocab[self.first_placeholder_id]
-            self.token_to_id.pop(placeholder_token)
-
-            # Switch the placeholder token for a special token
-            self.vocab[self.first_placeholder_id] = special_token
-            self.token_to_id[special_token] = self.first_placeholder_id
-            self.first_placeholder_id += 1
 
     @abstractmethod
     def tokenize(self, notes_df: pd.DataFrame) -> list[str]:
