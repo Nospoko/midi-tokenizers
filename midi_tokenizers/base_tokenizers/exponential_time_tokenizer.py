@@ -206,6 +206,9 @@ class ExponentialTimeTokenizer(MidiTokenizer):
         """
         new_vocab = self.vocab.copy()
         for special_token in special_tokens:
+            if special_token in new_vocab:
+                print(f"Special token already in vocab: {special_token}")
+                continue
             # Switch the placeholder token for a special token
             new_vocab[self.first_placeholder_id] = special_token
             self.first_placeholder_id += 1
