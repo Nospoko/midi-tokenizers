@@ -295,13 +295,8 @@ class ExponentialTimeTokenizer(MidiTokenizer):
 
     def tokenize(self, notes_df: pd.DataFrame) -> list[str]:
         notes_df = self.quantize_frame(notes_df)
+        notes_df = notes_df.sort_values(by="pitch")
 
-        # TODO Why do we need a "stable" kind? (I'm guessing we don't)
-        notes_df = notes_df.sort_values(by="pitch")  # , kind="stable")
-
-        # FIXME This is not assigned and doesn't do anything ...
-        # Should this overwrite notes_df, or be removed? (I'm guessing removed)
-        # notes_df.sort_values(by="start", kind="stable")
         events = self._notes_to_events(notes_df)
 
         tokens = []
