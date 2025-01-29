@@ -94,45 +94,45 @@ def test_tokenizer_accuracy(
 
 
 def main():
-    # Load the dataset
     dataset = load_dataset("roszcz/maestro-sustain-v2", split="validation")
 
     print("Loading MidiPieces...")
-    loading_start_time = time.time()
+    loading_start = time.time()
     midi_pieces = load_midi_pieces(dataset)
-    loading_end_time = time.time()
-    loading_time = loading_end_time - loading_start_time
-    print(f"MidiPieces loaded in {loading_time:.2f} seconds")
+    print(f"MidiPieces loaded in {time.time() - loading_start:.2f} seconds")
 
-    tokenizer = ExponentialTimeTokenizer(min_time_unit=0.01, n_velocity_bins=32)
+    # Initialize tokenizer with proper config
+    tokenizer = ExponentialTimeTokenizer.build_tokenizer(
+        tokenizer_config={
+            "time_unit": 0.01,
+            "max_time_step": 1.0,
+            "n_velocity_bins": 32,
+            "n_special_ids": 1024,
+        }
+    )
+
+    # Test serialization/deserialization
     tokenizer_desc = tokenizer.to_dict()
-    tokenizer = ExponentialTimeTokenizer.from_dict(tokenizer_desc=tokenizer_desc)
-    # tokenizer = AwesomeMidiTokenizer.from_file(
-    #     "dumps/awesome_tokenizers/awesome-tokenizer-test-2024-06-11_17-11-44.json",
-    # )
+    tokenizer = ExponentialTimeTokenizer.from_dict(tokenizer_desc)
 
-    print("\nRunning speed and accuracy test for ExponentialTimeTokenizer on validation split")
-    print(f"Dataset size: {len(midi_pieces)} records")
+    print(f"\nTesting ExponentialTimeTokenizer on {len(midi_pieces)} records")
 
-    # Measure tokenization speed
     tokenized_pieces = measure_tokenization_speed(
         tokenizer=tokenizer,
         midi_pieces=midi_pieces,
     )
 
-    # Measure untokenization speed
     untokenized_pieces = measure_untokenization_speed(
         tokenizer=tokenizer,
         tokenized_pieces=tokenized_pieces,
     )
-
-    # Test accuracy
+    print(midi_pieces[0].df, untokenized_pieces[0])
     print("\nTesting accuracy...")
-    accuracy_results = test_tokenizer_accuracy(midi_pieces, untokenized_pieces)
-    print(f"Total notes: {accuracy_results['total_notes']}")
-    print(f"Notes within 10ms tolerance: {accuracy_results['notes_within_tolerance']}")
-    print(f"Percentage within tolerance: {accuracy_results['percentage_within_tolerance']:.2f}%")
-    print(f"Max absolute error: {accuracy_results['max_error_ms']:.2f}ms")
+    results = test_tokenizer_accuracy(midi_pieces, untokenized_pieces)
+    print(f"Total notes: {results['total_notes']}")
+    print(f"Notes within 10ms: {results['notes_within_tolerance']}")
+    print(f"Accuracy: {results['percentage_within_tolerance']:.2f}%")
+    print(f"Max error: {results['max_error_ms']:.2f}ms")
 
 
 if __name__ == "__main__":

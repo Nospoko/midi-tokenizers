@@ -4,38 +4,53 @@ import pandas as pd
 
 
 class MidiTokenizer:
-    """
-    Base class for MIDI tokenizers.
+    """Base class for MIDI tokenization.
+
+    Handles conversion between MIDI data and token sequences using configurable vocabulary
+    and encoding schemes.
 
     Attributes:
-        token_to_id (dict): Mapping from tokens to their corresponding IDs.
-        vocab (list): List of tokens in the vocabulary.
-        name (str): Name of the tokenizer.
-        special_tokens (list): List of special tokens.
+        tokenizer_config (dict): Configuration parameters
+        vocab (list[str]): Vecabulary of the tokenizer
+        pad_token_id (int): ID of padding token
     """
 
-    def __init__(self, special_tokens: list[str] = None):
-        """
-        Initializes the MidiTokenizer with optional special tokens.
+    def __init__(
+        self,
+        vocab: list[str],
+        tokenizer_config: dict,
+    ):
+        """Initialize tokenizer with vocabulary and configuration.
 
-        Parameters:
-            special_tokens (list[str], optional): List of special tokens. Defaults to None.
+        Args:
+            tokenizer_config (dict[str, Any]): Args defining tokenization behavior
         """
-        self.token_to_id = None
-        self.vocab = []
-        self.name = "MidiTokenizer"
-        self.special_tokens = special_tokens
-        if self.special_tokens is None:
-            self.special_tokens = ["<PAD>", "<CLS>"]
-        self.pad_token_id = 0
+        self.set_vocab(vocab)
+
+        self.tokenizer_config = tokenizer_config
+
+        self.pad_token_id = self.token_to_id["<PAD>"]
+
+    @property
+    def vocab(self) -> list[str]:
+        return self._vocab
+
+    def set_vocab(self, new_vocab: list[str]):
+        self._vocab = new_vocab
+        self.token_to_id = {token: it for it, token in enumerate(new_vocab)}
+
+    @classmethod
+    @abstractmethod
+    def build_tokenizer(cls, tokenizer_config: dict) -> "MidiTokenizer":
+        pass
 
     @abstractmethod
     def tokenize(self, notes_df: pd.DataFrame) -> list[str]:
         """
         Abstract method to tokenize a record.
 
-        Parameters:
-            TODO: Please ALWAYS write consistent abstract methods and documentation
+        Args:
+            notes_df: DataFrame with columns [start, end, pitch, velocity]
 
         Returns:
             list[str]: List of tokens.
@@ -50,7 +65,7 @@ class MidiTokenizer:
         """
         Abstract method to untokenize a list of tokens.
 
-        Parameters:
+        Args:
             tokens (list[str]): The list of tokens to untokenize.
 
         Returns:
@@ -73,7 +88,7 @@ class MidiTokenizer:
         """
         Decodes a list of token IDs into a DataFrame.
 
-        Parameters:
+        Args:
             token_ids (list[int]): List of token IDs to decode.
 
         Returns:
@@ -132,4 +147,5 @@ class MidiTokenizer:
         return cls(**tokenizer_desc["parameters"])
 
     def to_dict(self) -> dict:
-        return {"name": self.name, "parameters": self.parameters}
+        name = self.__class__.__name__
+        return {"name": name, "parameters": self.parameters}

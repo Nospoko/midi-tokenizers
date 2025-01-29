@@ -87,7 +87,7 @@ import pandas as pd
 from midi_tokenizers import OneTimeTokenizer, ExponentialTimeTokenizer, QuantizedMidiTokenizer
 
 # Sample MIDI data
-data = pd.DataFrame({
+notes_df = pd.DataFrame({
     'pitch': [74, 71, 83, 79, 77],
     'velocity': [92, 110, 103, 92, 89],
     'start': [0.973958, 0.985417, 0.985417, 0.989583, 0.989583],

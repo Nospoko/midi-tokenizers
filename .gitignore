@@ -4,3 +4,4 @@ dumps/*
 *.egg-info
 build/*
 notes.py
+.*
