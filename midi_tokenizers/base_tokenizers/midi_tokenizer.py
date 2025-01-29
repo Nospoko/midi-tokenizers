@@ -30,12 +30,12 @@ class MidiTokenizer:
         self.pad_token_id = 0
 
     @abstractmethod
-    def tokenize(self, record: dict) -> list[str]:
+    def tokenize(self, notes_df: pd.DataFrame) -> list[str]:
         """
         Abstract method to tokenize a record.
 
         Parameters:
-            record (dict): The input record to tokenize.
+            TODO: Please ALWAYS write consistent abstract methods and documentation
 
         Returns:
             list[str]: List of tokens.
@@ -80,18 +80,44 @@ class MidiTokenizer:
             pd.DataFrame: DataFrame representation of the decoded tokens.
         """
         tokens = [self.vocab[token_id] for token_id in token_ids]
-        df = self.untokenize(tokens)
+        notes_df = self.untokenize(tokens)
 
-        return df
+        return notes_df
+
+    def encode_notes_df(self, notes_df: pd.DataFrame) -> list[int]:
+        notes_df = notes_df.copy()
+        note_tokens = self.tokenize(notes_df)
+        encoded_notes = self.encode_tokens(note_tokens)
+
+        return encoded_notes
+
+    def encode_tokens(self, tokens: list[str]) -> list[int]:
+        encoded_tokens = [self.token_to_id[token] for token in tokens]
+        return encoded_tokens
+
+    def pad_to_size(self, token_ids: list[int], target_size: int) -> list[int]:
+        padding_size = target_size - len(token_ids)
+        if padding_size < 0:
+            raise ValueError(
+                """
+            You requested padding to a size _smaller_ then input sequence.
+            This is nonsense and you probably have a bug earlier in the process.
+            """
+            )
+        padding = [self.pad_token_id] * padding_size
+
+        padded_token_ids = token_ids + padding
+
+        return padded_token_ids
 
     def encode(
         self,
-        notes: pd.DataFrame,
+        notes_df: pd.DataFrame,
         pad_to_size: int = 0,
         prefix_tokens: list[str] = [],
     ) -> list[int]:
-        notes = notes.copy()
-        tokens = self.tokenize(notes)
+        notes_df = notes_df.copy()
+        tokens = self.tokenize(notes_df)
         encoding = [self.token_to_id[token] for token in tokens]
 
         padding_size = pad_to_size - len(encoding) - len(prefix_tokens)
@@ -102,7 +128,7 @@ class MidiTokenizer:
         return prefix_ids + encoding + padding
 
     @classmethod
-    def from_dict(cls, tokenizer_desc) -> dict:
+    def from_dict(cls, tokenizer_desc) -> "MidiTokenizer":
         return cls(**tokenizer_desc["parameters"])
 
     def to_dict(self) -> dict:

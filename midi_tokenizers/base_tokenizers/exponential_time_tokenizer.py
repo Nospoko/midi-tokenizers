@@ -206,11 +206,11 @@ class ExponentialTimeTokenizer(MidiTokenizer):
 
         return time_tokens
 
-    def tokenize(self, notes: pd.DataFrame) -> list[str]:
-        notes = self.quantize_frame(notes)
-        notes = notes.sort_values(by="pitch", kind="stable")
-        notes.sort_values(by="start", kind="stable")
-        events = self._notes_to_events(notes)
+    def tokenize(self, notes_df: pd.DataFrame) -> list[str]:
+        notes_df = self.quantize_frame(notes_df)
+        notes_df = notes_df.sort_values(by="pitch", kind="stable")
+        notes_df.sort_values(by="start", kind="stable")
+        events = self._notes_to_events(notes_df)
 
         tokens = []
         previous_time = 0
@@ -268,4 +268,5 @@ class ExponentialTimeTokenizer(MidiTokenizer):
             notes_df.loc[notes_df["end"] == notes_df["start"], "end"] += self.min_time_unit
             notes_df = notes_df.sort_values(by="pitch", kind="stable")
             notes_df = notes_df.sort_values("start", kind="stable").reset_index(drop=True)
+
         return notes_df
