@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "midi_tokenizers"
-version = "2.1.0"
+version = "2.1.1"
 authors = [
   { name="Wojciech Matejuk", email="wmatejuk14@gmail.com" },
   { name = "EPR Labs", email = "tomek@epr-labs.com" }
@@ -17,7 +17,7 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 dependencies = [
-  "datasets~=2.17.1",
+  "datasets>=2.17.1",
   "tokenizers>=0.15.2",
   "fortepyan>=0.4.2",
   "numpy~=1.26.3",

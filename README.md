@@ -335,6 +335,36 @@ bpe_tokenizer.save_tokenizer('bpe_tokenizer.json')
 loaded_tokenizer = BpeMidiTokenizer.from_file('bpe_tokenizer.json')
 ```
 
+# Development
+
+## Testing a tokenizer
+
+```bash
+python -m scripts.test_tokenizer
+```
+
+If tokenizer works, you should see:
+
+```
+Testing ExponentialTimeTokenizer on 137 records
+
+Tokenization:
+Total time: 4.58 seconds
+Total tokens: 3250843
+Tokenization speed: 709270.50 tokens/second
+
+Untokenization:
+Total time: 5.24 seconds
+Total tokens: 3250843
+Untokenization speed: 620931.93 tokens/second
+
+Testing accuracy...
+Total notes: 639425
+Notes within 10ms: 639425
+Accuracy: 100.00%
+Max error: 5.00ms
+```
+
 ## Code Style
 
 This repository uses pre-commit hooks with forced python formatting ([black](https://github.com/psf/black),
