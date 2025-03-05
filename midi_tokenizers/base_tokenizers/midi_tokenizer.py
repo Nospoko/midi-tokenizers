@@ -102,9 +102,9 @@ class MidiTokenizer:
     def encode_notes_df(self, notes_df: pd.DataFrame) -> list[int]:
         notes_df = notes_df.copy()
         note_tokens = self.tokenize(notes_df)
-        encoded_notes = self.encode_tokens(note_tokens)
+        token_ids = self.encode_tokens(note_tokens)
 
-        return encoded_notes
+        return token_ids
 
     def encode_tokens(self, tokens: list[str]) -> list[int]:
         encoded_tokens = [self.token_to_id[token] for token in tokens]

@@ -1,9 +1,19 @@
 import re
+from typing import NamedTuple
 
 import numpy as np
 import pandas as pd
 
 from midi_tokenizers.base_tokenizers.midi_tokenizer import MidiTokenizer
+
+
+class NotesEncoding(NamedTuple):
+    token_ids: list[int]
+    time_steps: list[int]
+
+    def __rich_repr__(self):
+        yield "n_tokens", len(self.token_ids)
+        yield "n_time_steps", len(self.time_steps)
 
 
 class ExponentialTimeTokenizer(MidiTokenizer):
@@ -363,3 +373,32 @@ class ExponentialTimeTokenizer(MidiTokenizer):
             notes_df = notes_df.sort_values("start", kind="stable").reset_index(drop=True)
 
         return notes_df
+
+    def encode_notes_df(self, notes_df: pd.DataFrame) -> NotesEncoding:
+        notes_df = notes_df.copy()
+        note_tokens = self.tokenize(notes_df)
+
+        token_ids = self.encode_tokens(note_tokens)
+        time_steps = self.extract_time_steps(note_tokens)
+
+        notes_encoding = NotesEncoding(
+            token_ids=token_ids,
+            time_steps=time_steps,
+        )
+
+        return notes_encoding
+
+    def extract_time_steps(self, note_tokens: list[str]) -> list[int]:
+        # We start with 1 because 0 has to be reserved for "padding"
+        # i.e. all non musical tokens, not just <PAD>
+        time_step = 1
+        time_steps = []
+
+        for token in note_tokens:
+            # Extract number before 'T'
+            match = re.match(pattern=r"(\d+)T$", string=token)
+            if match:
+                time_step += int(match.group(1))
+            time_steps.append(time_step)
+
+        return time_steps
