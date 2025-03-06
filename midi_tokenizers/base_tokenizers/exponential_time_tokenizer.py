@@ -1,5 +1,4 @@
 import re
-from typing import NamedTuple
 
 import numpy as np
 import pandas as pd
@@ -7,19 +6,10 @@ import pandas as pd
 from midi_tokenizers.base_tokenizers.midi_tokenizer import MidiTokenizer
 
 
-class NotesEncoding(NamedTuple):
-    token_ids: list[int]
-    time_steps: list[int]
-
-    def __rich_repr__(self):
-        yield "n_tokens", len(self.token_ids)
-        yield "n_time_steps", len(self.time_steps)
-
-
 class ExponentialTimeTokenizer(MidiTokenizer):
     def __init__(
         self,
-        vocab: list[str],
+        lexicon: dict[str, list[str]],
         step_sizes: list[int],
         first_placeholder_id: int,
         tokenizer_config: dict,
@@ -34,9 +24,13 @@ class ExponentialTimeTokenizer(MidiTokenizer):
             tokenizer_config: Contains time_unit, n_velocity_bins, n_special_ids
         """
         super().__init__(
-            vocab=vocab,
+            vocab=lexicon["vocab"],
             tokenizer_config=tokenizer_config,
         )
+        self.note_tokens = lexicon["note_tokens"]
+        self.time_tokens = lexicon["time_tokens"]
+        self.velocity_tokens = lexicon["velocity_tokens"]
+
         self.first_placeholder_id = first_placeholder_id
         self.time_unit = self.tokenizer_config["time_unit"]
         self.n_velocity_bins = self.tokenizer_config["n_velocity_bins"]
@@ -54,14 +48,22 @@ class ExponentialTimeTokenizer(MidiTokenizer):
         # TODO The requirement for the largest step size being first is very obfuscated
         self.step_sizes = sorted(step_sizes, reverse=True)
 
+    @property
+    def music_tokens(self) -> list[str]:
+        music_tokens = self.note_tokens + self.velocity_tokens + self.time_tokens
+
+        return music_tokens
+
     @classmethod
     def build_tokenizer(cls, tokenizer_config: dict) -> "ExponentialTimeTokenizer":
-        lexicon = cls._build_lexicon(tokenizer_config=tokenizer_config)
+        tokenizer_args = cls._prepare_tokenizer_args(
+            tokenizer_config=tokenizer_config,
+        )
 
         tokenizer = cls(
-            vocab=lexicon["vocab"],
-            step_sizes=lexicon["step_sizes"],
-            first_placeholder_id=lexicon["first_placeholder_id"],
+            lexicon=tokenizer_args["lexicon"],
+            step_sizes=tokenizer_args["step_sizes"],
+            first_placeholder_id=tokenizer_args["first_placeholder_id"],
             tokenizer_config=tokenizer_config,
         )
         return tokenizer
@@ -124,7 +126,7 @@ class ExponentialTimeTokenizer(MidiTokenizer):
         return tokenizer
 
     @classmethod
-    def _build_lexicon(cls, tokenizer_config: dict) -> dict:
+    def _prepare_tokenizer_args(cls, tokenizer_config: dict) -> dict:
         """Construct tokenizer vocabulary and mappings.
 
         Creates tokens for:
@@ -143,21 +145,27 @@ class ExponentialTimeTokenizer(MidiTokenizer):
         vocab = ["<PAD>", "<CLS>"]
 
         # Add MIDI note and velocity tokens to the vocabulary
+        note_tokens = []
         for pitch in range(21, 109):
             note_on_token = cls.pitch_to_on_token(pitch=pitch)
-            note_off_token = cls.pitch_to_off_token(pitch=pitch)
+            note_tokens.append(note_on_token)
 
-            vocab.append(note_on_token)
-            vocab.append(note_off_token)
+            note_off_token = cls.pitch_to_off_token(pitch=pitch)
+            note_tokens.append(note_off_token)
+
+        vocab += note_tokens
 
         n_velocity_bins = tokenizer_config["n_velocity_bins"]
+        velocity_tokens = []
         for bin in range(n_velocity_bins):
             velocity_token = cls.velocity_bin_to_token(bin)
-            vocab.append(velocity_token)
+            velocity_tokens.append(velocity_token)
+
+        vocab += velocity_tokens
 
         time_unit = tokenizer_config["time_unit"]
         max_time_step = tokenizer_config["max_time_step"]
-        time_vocab = cls.build_time_vocab(
+        time_vocab = cls._build_time_vocab(
             time_unit=time_unit,
             max_time_step=max_time_step,
         )
@@ -169,15 +177,23 @@ class ExponentialTimeTokenizer(MidiTokenizer):
         for it in range(n_special_ids):
             vocab.append(f"<PLACEHOLDER_{it}>")
 
+        # TODO This is not a "lexicon"
         lexicon = {
             "vocab": vocab,
+            "time_tokens": time_vocab["time_tokens"],
+            "note_tokens": note_tokens,
+            "velocity_tokens": velocity_tokens,
+        }
+
+        tokenizer_args = {
+            "lexicon": lexicon,
             "step_sizes": time_vocab["step_sizes"],
             "first_placeholder_id": first_placeholder_token,
         }
-        return lexicon
+        return tokenizer_args
 
     @classmethod
-    def build_time_vocab(
+    def _build_time_vocab(
         cls,
         time_unit: float,
         max_time_step: float = 1.0,
@@ -374,31 +390,32 @@ class ExponentialTimeTokenizer(MidiTokenizer):
 
         return notes_df
 
-    def encode_notes_df(self, notes_df: pd.DataFrame) -> NotesEncoding:
+    def encode_notes_df(self, notes_df: pd.DataFrame) -> list[int]:
         notes_df = notes_df.copy()
         note_tokens = self.tokenize(notes_df)
 
         token_ids = self.encode_tokens(note_tokens)
-        time_steps = self.extract_time_steps(note_tokens)
 
-        notes_encoding = NotesEncoding(
-            token_ids=token_ids,
-            time_steps=time_steps,
-        )
+        return token_ids
 
-        return notes_encoding
+    def token_ids_to_time_steps(self, token_ids: list[int]) -> list[int]:
+        # Convert ids back to meaningful tokens
+        tokens = [self.vocab[token_id] for token_id in token_ids]
 
-    def extract_time_steps(self, note_tokens: list[str]) -> list[int]:
         # We start with 1 because 0 has to be reserved for "padding"
         # i.e. all non musical tokens, not just <PAD>
         time_step = 1
         time_steps = []
 
-        for token in note_tokens:
+        for token in tokens:
             # Extract number before 'T'
             match = re.match(pattern=r"(\d+)T$", string=token)
             if match:
                 time_step += int(match.group(1))
-            time_steps.append(time_step)
+            if token in self.music_tokens:
+                time_steps.append(time_step)
+            else:
+                # Non-musical tokens get covert by non-trainable 0
+                time_steps.append(0)
 
         return time_steps
