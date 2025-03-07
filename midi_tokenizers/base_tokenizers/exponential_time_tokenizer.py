@@ -1,4 +1,5 @@
 import re
+from typing import NamedTuple
 
 import numpy as np
 import pandas as pd
@@ -6,10 +7,36 @@ import pandas as pd
 from midi_tokenizers.base_tokenizers.midi_tokenizer import MidiTokenizer
 
 
+class TokenizerLexicon(NamedTuple):
+    vocab: list[str]
+    note_tokens: list[str]
+    time_tokens: list[str]
+    velocity_tokens: list[str]
+
+    def to_dict(self) -> dict[str, list[str]]:
+        return self._asdict()
+
+    @classmethod
+    def from_vocab(cls, vocab: list[str]) -> "TokenizerLexicon":
+        # I need this for backward compatibility, will remove once
+        # current checkpoints are synced with new tokenizer constructor
+        note_tokens = [token for token in vocab if token.startswith("NOTE_")]
+        time_tokens = [token for token in vocab if token.endswith("T")]
+        velocity_tokens = [token for token in vocab if token.startswith("VELOC")]
+
+        this = cls(
+            vocab=vocab,
+            note_tokens=note_tokens,
+            time_tokens=time_tokens,
+            velocity_tokens=velocity_tokens,
+        )
+        return this
+
+
 class ExponentialTimeTokenizer(MidiTokenizer):
     def __init__(
         self,
-        lexicon: dict[str, list[str]],
+        lexicon: TokenizerLexicon,
         step_sizes: list[int],
         first_placeholder_id: int,
         tokenizer_config: dict,
@@ -24,12 +51,13 @@ class ExponentialTimeTokenizer(MidiTokenizer):
             tokenizer_config: Contains time_unit, n_velocity_bins, n_special_ids
         """
         super().__init__(
-            vocab=lexicon["vocab"],
+            vocab=lexicon.vocab,
             tokenizer_config=tokenizer_config,
         )
-        self.note_tokens = lexicon["note_tokens"]
-        self.time_tokens = lexicon["time_tokens"]
-        self.velocity_tokens = lexicon["velocity_tokens"]
+        self.lexicon = lexicon
+        self.note_tokens = lexicon.note_tokens
+        self.time_tokens = lexicon.time_tokens
+        self.velocity_tokens = lexicon.velocity_tokens
 
         self.first_placeholder_id = first_placeholder_id
         self.time_unit = self.tokenizer_config["time_unit"]
@@ -73,10 +101,27 @@ class ExponentialTimeTokenizer(MidiTokenizer):
         yield "vocab_size", self.vocab_size
         yield "n_placeholder_tokens", self.n_placeholder_tokens
 
+    @classmethod
+    def from_dict(cls, tokenizer_desc) -> "MidiTokenizer":
+        parameters = tokenizer_desc["parameters"]
+        if "vocab" in parameters:
+            lexicon = TokenizerLexicon.from_vocab(parameters["vocab"])
+        else:
+            lexicon = TokenizerLexicon(**parameters["lexicon"])
+
+        this = cls(
+            lexicon=lexicon,
+            step_sizes=parameters["step_sizes"],
+            first_placeholder_id=parameters["first_placeholder_id"],
+            tokenizer_config=parameters["tokenizer_config"],
+        )
+
+        return this
+
     @property
     def parameters(self):
         return {
-            "vocab": self.vocab,
+            "lexicon": self.lexicon.to_dict(),
             "step_sizes": self.step_sizes,
             "first_placeholder_id": self.first_placeholder_id,
             "tokenizer_config": self.tokenizer_config,
@@ -177,13 +222,12 @@ class ExponentialTimeTokenizer(MidiTokenizer):
         for it in range(n_special_ids):
             vocab.append(f"<PLACEHOLDER_{it}>")
 
-        # TODO This is not a "lexicon"
-        lexicon = {
-            "vocab": vocab,
-            "time_tokens": time_vocab["time_tokens"],
-            "note_tokens": note_tokens,
-            "velocity_tokens": velocity_tokens,
-        }
+        lexicon = TokenizerLexicon(
+            vocab=vocab,
+            time_tokens=time_vocab["time_tokens"],
+            note_tokens=note_tokens,
+            velocity_tokens=velocity_tokens,
+        )
 
         tokenizer_args = {
             "lexicon": lexicon,
@@ -398,7 +442,11 @@ class ExponentialTimeTokenizer(MidiTokenizer):
 
         return token_ids
 
-    def token_ids_to_time_steps(self, token_ids: list[int]) -> list[int]:
+    def token_ids_to_time_steps(
+        self,
+        token_ids: list[int],
+        restart_tokens: list[str] = [],
+    ) -> list[int]:
         # Convert ids back to meaningful tokens
         tokens = [self.vocab[token_id] for token_id in token_ids]
 
@@ -407,11 +455,19 @@ class ExponentialTimeTokenizer(MidiTokenizer):
         time_step = 1
         time_steps = []
 
+        # TODO I think the time_step will have to go back to 1
+        # when it hits the <GENAI> token :see_no_evil:
         for token in tokens:
             # Extract number before 'T'
             match = re.match(pattern=r"(\d+)T$", string=token)
             if match:
+                # If it is, the time step moves forward
                 time_step += int(match.group(1))
+            elif token in restart_tokens:
+                # If time should go back to start
+                time_step = 1
+
+            # TODO Maybe we don't need embeddings for T tokens?
             if token in self.music_tokens:
                 time_steps.append(time_step)
             else:

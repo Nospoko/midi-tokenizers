@@ -77,8 +77,9 @@ class MidiTokenizer:
         raise NotImplementedError("Your encoder needs *untokenize* implementation")
 
     @property
+    @abstractmethod
     def parameters(self):
-        return {}
+        raise NotImplementedError("Your tokenizer needs parameters definition")
 
     @property
     def vocab_size(self) -> int:
