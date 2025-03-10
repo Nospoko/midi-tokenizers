@@ -16,6 +16,12 @@ class TokenizerLexicon(NamedTuple):
     def to_dict(self) -> dict[str, list[str]]:
         return self._asdict()
 
+    def set_vocab(self, vocab: list[str]) -> "TokenizerLexicon":
+        # TODO I'm not a fan of using NamedTuple._replace and ignoring
+        # immutability. Better ways should be considered
+        new_lexicon = self._replace(vocab=vocab)
+        return new_lexicon
+
     @classmethod
     def from_vocab(cls, vocab: list[str]) -> "TokenizerLexicon":
         # I need this for backward compatibility, will remove once
@@ -283,7 +289,10 @@ class ExponentialTimeTokenizer(MidiTokenizer):
             new_vocab[self.first_placeholder_id] = special_token
             self.first_placeholder_id += 1
 
+        # TODO This is not good, we should make this into a single .set_vocab
+        # call. Probably getting rid of the fake abstract class is the way
         self.set_vocab(new_vocab)
+        self.lexicon = self.lexicon.set_vocab(new_vocab)
 
     def quantize_frame(self, notes_df: pd.DataFrame) -> pd.DataFrame:
         """
